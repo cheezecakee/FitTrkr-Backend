@@ -1,0 +1,14 @@
+{
+  "exercise_muscle_groups": [
+    {
+      "id": "ex-mg-uuid-1",
+      "exercise_id": "exercise-uuid-1",
+      "muscle_group_id": "muscle-uuid-1"
+    },
+    {
+      "id": "ex-mg-uuid-2",
+      "exercise_id": "exercise-uuid-2",
+      "muscle_group_id": "muscle-uuid-2"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "workouts": [
+    {
+      "id": "workout-uuid-1",
+      "user_id": "user-uuid-1",
+      "name": "Push Day",
+      "description": "Upper body pushing movements",
+      "created_at": "2024-02-14T13:00:00Z",
+      "updated_at": "2024-02-14T13:00:00Z",
+      "url": "https://example.com/workout-uuid-1"
+    },
+    {
+      "id": "workout-uuid-2",
+      "user_id": "user-uuid-2",
+      "name": "Leg Day",
+      "description": "Lower body strength",
+      "created_at": "2024-02-15T13:00:00Z",
+      "updated_at": "2024-02-15T13:00:00Z",
+      "url": "https://example.com/workout-uuid-2"
+    }
+  ]
+}

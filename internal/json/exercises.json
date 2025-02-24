@@ -1,0 +1,40 @@
+{
+  "exercises": [
+    {
+      "id": "exercise-uuid-1",
+      "name": "Bench Press",
+      "created_at": "2024-02-14T12:00:00Z",
+      "updated_at": "2024-02-14T12:00:00Z"
+    },
+    {
+      "id": "exercise-uuid-2",
+      "name": "Squats",
+      "created_at": "2024-02-14T12:00:00Z",
+      "updated_at": "2024-02-14T12:00:00Z"
+    },
+    {
+      "id": "exercise-uuid-3",
+      "name": "Pull-ups",
+      "created_at": "2024-02-14T12:00:00Z",
+      "updated_at": "2024-02-14T12:00:00Z"
+    },
+    {
+      "id": "exercise-uuid-4",
+      "name": "Shoulder Press",
+      "created_at": "2024-02-14T12:00:00Z",
+      "updated_at": "2024-02-14T12:00:00Z"
+    },
+    {
+      "id": "exercise-uuid-5",
+      "name": "Lat Pulldown",
+      "created_at": "2024-02-14T12:00:00Z",
+      "updated_at": "2024-02-14T12:00:00Z"
+    },
+    {
+      "id": "exercise-uuid-6",
+      "name": "Cable Row",
+      "created_at": "2024-02-14T12:00:00Z",
+      "updated_at": "2024-02-14T12:00:00Z"
+    }
+  ]
+}

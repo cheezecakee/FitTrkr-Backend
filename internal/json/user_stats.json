@@ -1,0 +1,24 @@
+{
+  "user_stats": [
+    {
+      "user_id": "user-uuid-1",
+      "age": 25,
+      "height": 175.0,
+      "weight": 80.0,
+      "hip": 90.0,
+      "waist": 75.0,
+      "neck": 40.0,
+      "bodyFatPercentage": 15.0
+    },
+    {
+      "user_id": "user-uuid-2",
+      "age": 28,
+      "height": 165.0,
+      "weight": 65.0,
+      "hip": 85.0,
+      "waist": 70.0,
+      "neck": 38.0,
+      "bodyFatPercentage": 18.5
+    }
+  ]
+}

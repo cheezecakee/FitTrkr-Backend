@@ -1,0 +1,16 @@
+{
+  "muscle_groups": [
+    {
+      "id": "muscle-uuid-1",
+      "name": "Chest"
+    },
+    {
+      "id": "muscle-uuid-2",
+      "name": "Back"
+    },
+    {
+      "id": "muscle-uuid-3",
+      "name": "Legs"
+    }
+  ]
+}

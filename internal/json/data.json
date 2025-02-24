@@ -1,0 +1,48 @@
+{
+  "users": [
+    { "id": "1", "username": "testuser", "password": "testpass" }
+  ],
+  "exercises": [
+    { "id":"1", "name": "Deadlift" },
+    { "id":"2", "name": "Squats" },
+    { "id":"3", "name": "Bench Press" },
+    { "id":"4", "name": "Pull-ups" },
+    { "id":"5", "name": "Hip Thrusts" },
+    { "id":"6", "name": "Shoulder Press" },
+    { "id":"7", "name": "Bicep Curl" },
+    { "id":"8", "name": "Tricep Dips" },
+    { "id":"9", "name": "Lunges" },
+    { "id":"10", "name": "Lat Pulldown" },
+    { "id":"11", "name": "Leg Press" },
+    { "id":"12", "name": "Chest Fly" },
+    { "id":"13", "name": "Cable Row" },
+    { "id":"14", "name": "Calf Raises" },
+    { "id":"15", "name": "Plank" },
+    { "id":"16", "name": "Russian Twists" },
+    { "id":"17", "name": "Face Pulls" },
+    { "id":"18", "name": "Side Lateral Raises" },
+    { "id":"19", "name": "Hammer Curls" },
+    { "id":"20", "name": "Romanian Deadlift" }
+  ],
+  "workouts": [
+    {
+      "id": "1",
+      "userid": "1",
+      "name": "Back Day",
+      "exercises": [
+        { "id": "1", "exercisename": "Deadlift", "reps": 5, "sets": 4, "interval": 60 },
+        { "id": "2", "exercisename": "Squats", "reps": 8, "sets": 3, "interval": 45 }
+      ]
+    },
+    {
+      "id": "2",
+      "userid": "1",
+      "name": "Glutes & Legs",
+      "exercises": [
+        { "id": "3", "exercisename": "Bench Press", "reps": 10, "sets": 4, "interval": 60 },
+        { "id": "4", "exercisename": "Pull-ups", "reps": 12, "sets": 3, "interval": 45 }
+      ]
+    }
+  ]
+}
+

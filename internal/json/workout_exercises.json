@@ -1,0 +1,26 @@
+{
+  "workout_exercises": [
+    {
+      "id": "we-uuid-1",
+      "workout_id": "workout-uuid-1",
+      "exercise_id": "exercise-uuid-1",
+      "sets": 4,
+      "reps_min": 8,
+      "reps_max": 12,
+      "weight": 80.0,
+      "interval": "00:30:00",
+      "rest": "00:01:00"
+    },
+    {
+      "id": "we-uuid-2",
+      "workout_id": "workout-uuid-2",
+      "exercise_id": "exercise-uuid-3",
+      "sets": 5,
+      "reps_min": 10,
+      "reps_max": 15,
+      "weight": 100.0,
+      "interval": "00:45:00",
+      "rest": "00:02:00"
+    }
+  ]
+}
