@@ -14,14 +14,17 @@ func (apiCfg *ApiConfig) SetupRoutes(dbQueries *database.Queries) http.Handler {
 
 	mux.Handle("/internal/", http.StripPrefix("/internal", http.FileServer(http.Dir("./internal/"))))
 
+	// Admin routes
+	mux.Handle("GET /api/admin/user", http.HandlerFunc(apiCfg.GetUsers))
+
 	// User routes
 	mux.Handle("POST /api/user/register", http.HandlerFunc(apiCfg.RegisterUser))
 	mux.Handle("POST /api/user/login", http.HandlerFunc(apiCfg.LoginUser))
-	mux.Handle("POST /api/user/logout", http.HandlerFunc(apiCfg.LogoutUser))
+	mux.Handle("POST /api/user/logout", apiCfg.ValidateSession(apiCfg.LogoutUser))
+	mux.Handle("PUT /api/user/edit", apiCfg.ValidateSession(apiCfg.EditUser))
+	mux.Handle("DELETE /api/user", apiCfg.ValidateSession(apiCfg.DeleteUser))
 	mux.Handle("POST /api/user/revoke", http.HandlerFunc(apiCfg.PostRevoke))
-	mux.Handle("PUT /api/user/edit", http.HandlerFunc(apiCfg.EditUser))
-	mux.Handle("DELETE /api/user", http.HandlerFunc(apiCfg.DeleteUser))
-	mux.Handle("POST /api/user/refresh", http.HandlerFunc(apiCfg.PostRefresh))
+	mux.Handle("POST /api/user/refresh", apiCfg.isAuthenticated(apiCfg.PostRefresh))
 
 	// Workout routes
 	// mux.Handle("GET /api/workouts/{id}", http.HandlerFunc(GetWorkouts))

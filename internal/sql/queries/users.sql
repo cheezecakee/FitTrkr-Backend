@@ -28,6 +28,9 @@ RETURNING *;
 -- name: GetUserByEmail :one
 SELECT * FROM users WHERE email = $1 LIMIT 1;
 
+-- name: GetUsers :many
+SELECT * FROM users;
+
 -- name: EditUser :one
 UPDATE users
 SET 
@@ -41,3 +44,4 @@ RETURNING *;
 
 -- name: DeleteUser :exec
 DELETE FROM users WHERE id = $1;
+

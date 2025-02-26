@@ -51,6 +51,13 @@ func main() {
 
 	// Start server
 	port := ":8080"
+
+	srv := &http.Server{
+		Addr:    port,
+		Handler: router,
+	}
+
 	fmt.Println("Server is running on http://localhost" + port)
-	log.Fatal(http.ListenAndServe(port, router))
+	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
+	log.Fatal(err)
 }

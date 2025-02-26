@@ -38,7 +38,7 @@ func (apiCfg *ApiConfig) GetWorkouts(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Create Workout (Add to JSON)
+// Create Workout
 func (apiCfg *ApiConfig) CreateWorkout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -75,7 +75,7 @@ func (apiCfg *ApiConfig) CreateWorkout(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(workout)
 }
 
-// Create Exercise (Add to JSON)
+// Create Exercise
 func (apiCfg *ApiConfig) CreateWorkoutExercise(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -293,7 +293,7 @@ func (apiCfg *ApiConfig) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(newUser)
 }
 
-// Login User (Check JSON Data)
+// Login User
 func (apiCfg *ApiConfig) LoginUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -320,8 +320,8 @@ func (apiCfg *ApiConfig) LoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate JWT token
-	token, err := apiCfg.MakeJWT(user.ID, time.Hour)
-	log.Printf("Generated Token: %s", token)
+	accessToken, err := apiCfg.MakeJWT(user.ID, time.Hour)
+	log.Printf("Generated Token: %s", accessToken)
 	if err != nil {
 		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
 		return
@@ -334,8 +334,8 @@ func (apiCfg *ApiConfig) LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Expires in 60 days
-	expiresAt := time.Now().Add(60 * 24 * time.Hour)
+	// Expires in 30 days
+	expiresAt := time.Now().Add(30 * 24 * time.Hour)
 
 	params := database.CreateRefreshTokenParams{
 		Token:     refreshToken,
@@ -353,7 +353,7 @@ func (apiCfg *ApiConfig) LoginUser(w http.ResponseWriter, r *http.Request) {
 	log.Printf("User login succesful!")
 
 	req = User{
-		Token:        token,
+		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}
 
@@ -368,25 +368,32 @@ func (apiCfg *ApiConfig) LoginUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (apiCfg *ApiConfig) LogoutUser(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	err := apiCfg.DB.DeleteSession(context.Background(), userID)
+	if err != nil {
+		log.Printf("Error deleting refresh token: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	log.Printf("User logged out succesfully, refresh token deleted!")
+	w.WriteHeader(204)
 }
 
 // Edit User (Check JSON Data)
 func (apiCfg *ApiConfig) EditUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	token, err := GetBearerToken(r.Header)
-	if err != nil {
-		log.Printf("%s", err)
-		http.Error(w, "Failed to get bearer token", http.StatusInternalServerError)
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-
-	userID, err := apiCfg.ValidateJWT(token)
-	if err != nil {
-		log.Printf("%s", err)
-		return
-	}
-	log.Printf("UserID: %s\n", userID)
 
 	var req User
 
@@ -433,20 +440,13 @@ func (apiCfg *ApiConfig) EditUser(w http.ResponseWriter, r *http.Request) {
 func (apiCfg *ApiConfig) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	token, err := GetBearerToken(r.Header)
-	if err != nil {
-		log.Printf("%s", err)
-		http.Error(w, "Failed to get bearer token", http.StatusInternalServerError)
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	userID, err := apiCfg.ValidateJWT(token) // Extract user ID from JWT
-	if err != nil {
-		log.Printf("%s", err)
-		return
-	}
-
-	err = apiCfg.DB.DeleteUser(ctx, userID)
+	err := apiCfg.DB.DeleteUser(ctx, userID)
 	if err != nil {
 		log.Printf("%s", err)
 		http.Error(w, "Failed to delete user", http.StatusInternalServerError)
@@ -465,56 +465,95 @@ func (apiConfig *ApiConfig) PostRevoke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = apiConfig.DB.RevokeRefreshTokenFromUser(context.Background(), refreshToken)
+	err = apiConfig.DB.RevokeRefreshToken(context.Background(), refreshToken)
 	if err != nil {
 		log.Printf("Error revoking refresh token: %s", err)
 		w.WriteHeader(500)
 	}
+
+	log.Printf("Refresh Token revoked succesfully!")
 	w.WriteHeader(204)
 }
 
-func (apiConfig *ApiConfig) PostRefresh(w http.ResponseWriter, r *http.Request) {
-	refreshToken, err := GetBearerToken(r.Header)
-	if err != nil {
-		log.Printf("Error getting bearer token: %s", err)
-		w.WriteHeader(401)
+func (apiCfg *ApiConfig) PostRefresh(w http.ResponseWriter, r *http.Request) {
+	// Get user ID from the request context (already validated in middleware)
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	refreshTokenData, err := apiConfig.DB.GetUserFromRefreshToken(context.Background(), refreshToken)
+	// Generate JWT token
+	newAccessToken, err := apiCfg.MakeJWT(userID, time.Hour)
+	log.Printf("Generated Token: %s", newAccessToken)
 	if err != nil {
-		log.Printf("Error retrieving refresh token: %s", err)
+		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+		return
+	}
+
+	newRefreshToken, err := MakeRefreshToken()
+	if err != nil {
+		log.Printf("Error generating refesh token: %s", err)
 		w.WriteHeader(500)
 		return
 	}
 
-	if time.Now().After(refreshTokenData.ExpiresAt) {
-		log.Printf("Refresh token has expired.")
-		w.WriteHeader(401)
-		return
+	// Expires in 30 days
+	expiresAt := time.Now().Add(30 * 24 * time.Hour)
+
+	params := database.CreateRefreshTokenParams{
+		Token:     newRefreshToken,
+		UserID:    userID,
+		ExpiresAt: expiresAt,
 	}
 
-	if refreshTokenData.RevokedAt.Valid && !refreshTokenData.RevokedAt.Time.IsZero() {
-		log.Printf("Refresh token has been revoked.")
-		w.WriteHeader(401)
-		return
-	}
-
-	newAccessToken, err := apiConfig.MakeJWT(refreshTokenData.UserID, time.Hour)
+	_, err = apiCfg.DB.CreateRefreshToken(context.Background(), params)
 	if err != nil {
-		log.Printf("Error generating new token: %s", err)
+		log.Printf("Error creating refesh token: %s", err)
 		w.WriteHeader(500)
 		return
 	}
 
 	user := User{
-		Token: newAccessToken,
+		AccessToken:  newAccessToken,
+		RefreshToken: newRefreshToken,
 	}
 
 	returnData, err := json.Marshal(user)
 	if err != nil {
 		log.Printf("Error marshalling JSON: %s", err)
 		w.WriteHeader(500)
+		return
+	}
+
+	log.Printf("Refresh token refreshed!")
+	w.WriteHeader(200)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(returnData)
+}
+
+func (apiCfg *ApiConfig) GetUsers(w http.ResponseWriter, r *http.Request) {
+	users, err := apiCfg.DB.GetUsers(context.Background())
+	if err != nil {
+		log.Printf("Error retrieving users: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	var userList []User
+	for _, user := range users {
+		userList = append(userList, User{
+			ID:        user.ID.String(),
+			FirstName: user.FirstName,
+			LastName:  user.LastName,
+			Age:       user.Age.Int32,
+		})
+	}
+
+	returnData, err := json.Marshal(userList)
+	if err != nil {
+		log.Printf("Error marshalling JSON: %s", err)
+		http.Error(w, "Failed to process user data", http.StatusInternalServerError)
 		return
 	}
 

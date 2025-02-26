@@ -27,7 +27,7 @@ type User struct {
 	Age          int32     `json:"age"`
 	Email        string    `json:"email"`
 	Password     string    `json:"password"`
-	Token        string    `json:"token"`
+	AccessToken  string    `json:"access_token"`
 	RefreshToken string    `json:"refresh_token"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`

@@ -128,6 +128,43 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	return i, err
 }
 
+const getUsers = `-- name: GetUsers :many
+SELECT id, first_name, last_name, password_hash, email, age, created_at, updated_at, is_premium FROM users
+`
+
+func (q *Queries) GetUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, getUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.FirstName,
+			&i.LastName,
+			&i.PasswordHash,
+			&i.Email,
+			&i.Age,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.IsPremium,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const registerUser = `-- name: RegisterUser :one
 INSERT INTO users (id, email, password_hash, first_name, last_name, age, created_at, updated_at)
 VALUES (

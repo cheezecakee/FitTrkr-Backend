@@ -9,7 +9,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Helper function to conver string to a UUID
 // Helper function to convert string to UUID
 func StrToUUID(id string) (uuid.UUID, error) {
 	return uuid.Parse(id) // Directly return result and error

@@ -10,8 +10,14 @@ VALUES (
 )
 RETURNING *;
 
--- name: GetUserFromRefreshToken :one
-SELECT user_id, token, expires_at, revoked_at, created_at, updated_at FROM refresh_tokens WHERE token = $1 LIMIT 1;
+-- name: GetSession :one
+SELECT * FROM refresh_tokens WHERE token = $1 LIMIT 1;
 
--- name: RevokeRefreshTokenFromUser :exec
-UPDATE refresh_tokens SET revoked_at = now(), updated_at = now() WHERE token = $1;
+-- name: GetLatestSessionByID :one
+SELECT * FROM refresh_tokens WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1;
+
+-- name: RevokeRefreshToken :exec
+UPDATE refresh_tokens SET is_revoked = true, revoked_at = now(), updated_at = now() WHERE token = $1;
+
+-- name: DeleteSession :exec
+DELETE FROM refresh_tokens WHERE user_id = $1;

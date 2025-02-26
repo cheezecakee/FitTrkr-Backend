@@ -7,7 +7,6 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -23,7 +22,7 @@ VALUES (
     now(),
     NULL
 )
-RETURNING token, created_at, updated_at, user_id, expires_at, revoked_at
+RETURNING token, created_at, updated_at, user_id, is_revoked, expires_at, revoked_at
 `
 
 type CreateRefreshTokenParams struct {
@@ -40,44 +39,65 @@ func (q *Queries) CreateRefreshToken(ctx context.Context, arg CreateRefreshToken
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.UserID,
+		&i.IsRevoked,
 		&i.ExpiresAt,
 		&i.RevokedAt,
 	)
 	return i, err
 }
 
-const getUserFromRefreshToken = `-- name: GetUserFromRefreshToken :one
-SELECT user_id, token, expires_at, revoked_at, created_at, updated_at FROM refresh_tokens WHERE token = $1 LIMIT 1
+const deleteSession = `-- name: DeleteSession :exec
+DELETE FROM refresh_tokens WHERE user_id = $1
 `
 
-type GetUserFromRefreshTokenRow struct {
-	UserID    uuid.UUID
-	Token     string
-	ExpiresAt time.Time
-	RevokedAt sql.NullTime
-	CreatedAt time.Time
-	UpdatedAt time.Time
+func (q *Queries) DeleteSession(ctx context.Context, userID uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteSession, userID)
+	return err
 }
 
-func (q *Queries) GetUserFromRefreshToken(ctx context.Context, token string) (GetUserFromRefreshTokenRow, error) {
-	row := q.db.QueryRowContext(ctx, getUserFromRefreshToken, token)
-	var i GetUserFromRefreshTokenRow
+const getLatestSessionByID = `-- name: GetLatestSessionByID :one
+SELECT token, created_at, updated_at, user_id, is_revoked, expires_at, revoked_at FROM refresh_tokens WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1
+`
+
+func (q *Queries) GetLatestSessionByID(ctx context.Context, userID uuid.UUID) (RefreshToken, error) {
+	row := q.db.QueryRowContext(ctx, getLatestSessionByID, userID)
+	var i RefreshToken
 	err := row.Scan(
-		&i.UserID,
 		&i.Token,
-		&i.ExpiresAt,
-		&i.RevokedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.UserID,
+		&i.IsRevoked,
+		&i.ExpiresAt,
+		&i.RevokedAt,
 	)
 	return i, err
 }
 
-const revokeRefreshTokenFromUser = `-- name: RevokeRefreshTokenFromUser :exec
-UPDATE refresh_tokens SET revoked_at = now(), updated_at = now() WHERE token = $1
+const getSession = `-- name: GetSession :one
+SELECT token, created_at, updated_at, user_id, is_revoked, expires_at, revoked_at FROM refresh_tokens WHERE token = $1 LIMIT 1
 `
 
-func (q *Queries) RevokeRefreshTokenFromUser(ctx context.Context, token string) error {
-	_, err := q.db.ExecContext(ctx, revokeRefreshTokenFromUser, token)
+func (q *Queries) GetSession(ctx context.Context, token string) (RefreshToken, error) {
+	row := q.db.QueryRowContext(ctx, getSession, token)
+	var i RefreshToken
+	err := row.Scan(
+		&i.Token,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UserID,
+		&i.IsRevoked,
+		&i.ExpiresAt,
+		&i.RevokedAt,
+	)
+	return i, err
+}
+
+const revokeRefreshToken = `-- name: RevokeRefreshToken :exec
+UPDATE refresh_tokens SET is_revoked = true, revoked_at = now(), updated_at = now() WHERE token = $1
+`
+
+func (q *Queries) RevokeRefreshToken(ctx context.Context, token string) error {
+	_, err := q.db.ExecContext(ctx, revokeRefreshToken, token)
 	return err
 }
