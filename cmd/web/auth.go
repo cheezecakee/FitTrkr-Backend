@@ -46,6 +46,7 @@ func (apiCfg *ApiConfig) ValidateJWT(tokenString string) (uuid.UUID, error) {
 	if !token.Valid {
 		return uuid.Nil, nil
 	}
+
 	userID, err := userClaims.GetSubject()
 	if err != nil {
 		return uuid.Nil, errors.New("invalid token or claims")

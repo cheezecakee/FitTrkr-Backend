@@ -28,10 +28,10 @@ func (apiCfg *ApiConfig) SetupRoutes(dbQueries *database.Queries) http.Handler {
 
 	// Workout routes
 	// mux.Handle("GET /api/workouts/{id}", http.HandlerFunc(GetWorkouts))
-	mux.Handle("GET /api/workouts", http.HandlerFunc(apiCfg.GetWorkouts))
-	mux.Handle("POST /api/workouts", http.HandlerFunc(apiCfg.CreateWorkout))
-	mux.Handle("PUT /api/workouts/{id}", http.HandlerFunc(apiCfg.EditWorkout))
-	mux.Handle("DELETE /api/workouts/{id}", http.HandlerFunc(apiCfg.DeleteWorkout))
+	mux.Handle("GET /api/workouts", apiCfg.ValidateSession(apiCfg.GetWorkouts))
+	mux.Handle("POST /api/workouts", apiCfg.ValidateSession(apiCfg.CreateWorkout))
+	mux.Handle("PUT /api/workouts/{id}", apiCfg.ValidateSession(apiCfg.EditWorkout))
+	mux.Handle("DELETE /api/workouts/{id}", apiCfg.ValidateSession(apiCfg.DeleteWorkout))
 
 	// Workout Exercises routes
 	mux.Handle("POST /api/workouts/exercises", http.HandlerFunc(apiCfg.CreateWorkoutExercise))
