@@ -15,11 +15,14 @@ UPDATE workouts
 SET name = COALESCE(sqlc.narg('name'), name),
     description = COALESCE(sqlc.narg('description'), description),
     updated_at = NOW()
-WHERE id = $1
+WHERE id = $1 AND user_id = $2
 RETURNING *;
 
 -- name: GetWorkout :many
 SELECT * FROM workouts;
+
+-- name: GetWorkoutsByID :many
+SELECT * FROM workouts WHERE user_id = $1;
 
 -- name: DeleteWorkout :exec
 DELETE FROM workouts WHERE id = $1;

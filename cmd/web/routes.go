@@ -27,7 +27,6 @@ func (apiCfg *ApiConfig) SetupRoutes(dbQueries *database.Queries) http.Handler {
 	mux.Handle("POST /api/user/refresh", apiCfg.isAuthenticated(apiCfg.PostRefresh))
 
 	// Workout routes
-	// mux.Handle("GET /api/workouts/{id}", http.HandlerFunc(GetWorkouts))
 	mux.Handle("GET /api/workouts", apiCfg.ValidateSession(apiCfg.GetWorkouts))
 	mux.Handle("POST /api/workouts", apiCfg.ValidateSession(apiCfg.CreateWorkout))
 	mux.Handle("PUT /api/workouts/{id}", apiCfg.ValidateSession(apiCfg.EditWorkout))

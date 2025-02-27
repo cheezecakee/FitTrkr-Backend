@@ -24,8 +24,14 @@ type ApiConfig struct {
 func (apiCfg *ApiConfig) GetWorkouts(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	// Fetch workouts from DB
-	workouts, err := apiCfg.DB.GetWorkout(ctx)
+	workouts, err := apiCfg.DB.GetWorkoutsByID(ctx, userID)
 	if err != nil {
 		http.Error(w, "Failed to fetch workouts", http.StatusInternalServerError)
 		return
@@ -42,18 +48,17 @@ func (apiCfg *ApiConfig) GetWorkouts(w http.ResponseWriter, r *http.Request) {
 func (apiCfg *ApiConfig) CreateWorkout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	// Parse JSON request body
 	var req Workout
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
-		return
-	}
-
-	// Assuming req.UserID is a string from the request
-	userID, err := uuid.Parse(req.UserID)
-	if err != nil {
-		http.Error(w, "Invalid user ID format", http.StatusBadRequest)
 		return
 	}
 
@@ -130,6 +135,12 @@ func (apiCfg *ApiConfig) EditWorkout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	workoutIDStr := r.PathValue("id")
 
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	workoutID, err := uuid.Parse(workoutIDStr)
 	if err != nil {
 		http.Error(w, "Invalid workout ID format", http.StatusBadRequest)
@@ -149,10 +160,12 @@ func (apiCfg *ApiConfig) EditWorkout(w http.ResponseWriter, r *http.Request) {
 	// Update workout
 	updatedWorkout, err := apiCfg.DB.EditWorkout(ctx, database.EditWorkoutParams{
 		ID:          workoutID,
+		UserID:      userID,
 		Name:        StringToNullString(req.Name),
 		Description: StringToNullString(req.Description),
 	})
 	if err != nil {
+		log.Printf("%w", err)
 		http.Error(w, "Failed to update workout", http.StatusInternalServerError)
 		return
 	}
