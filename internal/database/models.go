@@ -18,6 +18,16 @@ type Exercise struct {
 	UpdatedAt sql.NullTime
 }
 
+type ExerciseSession struct {
+	ID                uuid.UUID
+	WorkoutSessionID  uuid.UUID
+	WorkoutExerciseID uuid.UUID
+	Completed         bool
+	IsActive          bool
+	EndedAt           sql.NullTime
+	CreatedAt         time.Time
+}
+
 type RefreshToken struct {
 	Token     string
 	CreatedAt time.Time
@@ -26,6 +36,17 @@ type RefreshToken struct {
 	IsRevoked bool
 	ExpiresAt time.Time
 	RevokedAt sql.NullTime
+}
+
+type SessionLog struct {
+	ID                    uuid.UUID
+	UserID                uuid.UUID
+	WorkoutSessionID      uuid.UUID
+	WorkoutExerciseLogsID uuid.NullUUID
+	LogType               string
+	LogPriority           string
+	LogMessage            string
+	CreatedAt             time.Time
 }
 
 type User struct {
@@ -61,4 +82,26 @@ type WorkoutExercise struct {
 	Rest       int32
 	CreatedAt  sql.NullTime
 	UpdatedAt  sql.NullTime
+}
+
+type WorkoutExerciseLog struct {
+	ID                uuid.UUID
+	ExerciseSessionID uuid.UUID
+	SetNumber         int32
+	Reps              int32
+	Weight            string
+	IntervalSec       int32
+	Notes             sql.NullString
+	CreatedAt         time.Time
+}
+
+type WorkoutSession struct {
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	WorkoutID uuid.UUID
+	Completed bool
+	IsActive  bool
+	EndedAt   sql.NullTime
+	CreatedAt time.Time
+	ExpiresAt time.Time
 }

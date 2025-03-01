@@ -34,5 +34,8 @@ SET sets = COALESCE(sqlc.narg('sets'), sets),
 WHERE id = $1
 RETURNING *;
 
+-- name: GetWorkoutExercises :many
+SELECT * FROM workout_exercises WHERE workout_id = $1;
+
 -- name: DeleteWorkoutExercise :exec
 DELETE FROM workout_exercises WHERE id = $1;

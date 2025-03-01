@@ -65,6 +65,49 @@ type Exercises struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+type WorkoutSession struct {
+	ID         string     `json:"id"`
+	UserID     string     `json:"user_id"`
+	WorkoutID  string     `json:"workout_id"`
+	IsFinished bool       `json:"is_finished"`
+	StartedAt  time.Time  `json:"started_at"`
+	EndedAt    *time.Time `json:"ended_at"`
+	CreatedAt  time.Time  `json:"created_at"`
+}
+
+type WorkoutExerciseSession struct {
+	ID                string    `json:"id"`
+	WorkoutSessionID  string    `json:"workout_session_id"`
+	WorkoutExerciseID string    `json:"workout_exercise_id"`
+	IsFinished        bool      `json:"is_finished"`
+	Skipped           bool      `json:"skipped"`
+	StartedAt         time.Time `json:"started_at"`
+	EndedAt           time.Time `json:"ended_at"`
+	CreatedAt         time.Time `json:"created_at"`
+}
+
+type WorkoutExerciseLogs struct {
+	ID                string    `json:"id"`
+	WorkoutExerciseID string    `json:"workout_exercise_id"`
+	SetNumber         int       `json:"set_number"`
+	Reps              int       `json:"reps"`
+	Weight            float64   `json:"weight"`
+	Interval          int64     `json:"interval"`
+	Notes             string    `json:"notes"`
+	CreatedAt         time.Time `json:"created_at"`
+}
+
+type SessionLogs struct {
+	ID                    string    `json:"id"`
+	UserID                string    `json:"user_id"`
+	WorkoutSessionID      string    `json:"workout_session_id"`
+	WorkoutExerciseLogsID *string   `json:"workout_exercise_logs_id"`
+	LogType               string    `json:"log_type"`
+	LogPriority           string    `json:"log_priority"`
+	LogMessage            string    `json:"log_message"`
+	CreatedAt             time.Time `json:"created_at"`
+}
+
 // Load data from JSON file
 func LoadData(dataFile string) (*Data, error) {
 	mu.Lock()

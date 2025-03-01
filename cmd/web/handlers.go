@@ -16,8 +16,9 @@ import (
 
 // Handler struct to hold dbQueries
 type ApiConfig struct {
-	DB        *database.Queries
-	JWTSecret []byte
+	DB             *database.Queries
+	JWTSecret      []byte
+	WorkoutSession *StartSession
 }
 
 // Get Workouts from JSON
@@ -575,12 +576,171 @@ func (apiCfg *ApiConfig) GetUsers(w http.ResponseWriter, r *http.Request) {
 	w.Write(returnData)
 }
 
-// Start Workout (Dummy Logic)
-func StartWorkout(w http.ResponseWriter, r *http.Request) {
+type StartSession struct {
+	WorkoutID         uuid.UUID
+	WorkoutExerciseID uuid.UUID
+	WorkoutSessionID  uuid.UUID
+	ExerciseSessionID uuid.UUID
+	isActive          bool
 }
 
-// Stop Workout (Dummy Logic)
-func StopWorkout(w http.ResponseWriter, r *http.Request) {
+func NewStartSession() *StartSession {
+	return &StartSession{
+		isActive: false,
+	}
+}
+
+func (apiCfg *ApiConfig) GetSession(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	startSession := NewStartSession()
+	apiCfg.WorkoutSession = startSession
+
+	// Extract userID from the context (after validating session)
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Fetch the active session for the user
+	session, err := apiCfg.DB.GetActiveWorkoutSession(ctx, userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Redirect(w, r, "/api/session/workout", http.StatusNotFound)
+		} else {
+			http.Error(w, "Failed to fetch session", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Send JSON response with session details
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(session); err != nil {
+		http.Error(w, "Failed to encode session", http.StatusInternalServerError)
+	}
+}
+
+func (apiCfg *ApiConfig) GetSessionWorkout(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Get workouts from DB
+	workouts, err := apiCfg.DB.GetWorkoutsByID(ctx, userID)
+	if err != nil {
+		http.Error(w, "Failed to fetch workouts", http.StatusInternalServerError)
+		return
+	}
+
+	// Send JSON response
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(workouts); err != nil {
+		http.Error(w, "Failed to encode workouts", http.StatusInternalServerError)
+	}
+}
+
+func (apiCfg *ApiConfig) PostSessionWorkout(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	workoutIDStr := r.PathValue("id")
+
+	workoutID, err := StrToUUID(workoutIDStr)
+	if err != nil {
+		log.Printf("%w", err)
+		http.Error(w, "Failed to get wokrout uuid", http.StatusInternalServerError)
+		return
+	}
+
+	apiCfg.WorkoutSession.WorkoutID = workoutID
+
+	// Fetch workouts from DB
+	exercises, err := apiCfg.DB.GetWorkoutExercises(ctx, workoutID)
+	if err != nil {
+		http.Error(w, "Failed to fetch workouts", http.StatusInternalServerError)
+		return
+	}
+
+	// Send JSON response
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(exercises); err != nil {
+		http.Error(w, "Failed to encode workouts", http.StatusInternalServerError)
+	}
+}
+
+func (apiCfg *ApiConfig) StartExercise(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	exerciseIDStr := r.PathValue("id")
+	exerciseID, err := StrToUUID(exerciseIDStr)
+	if err != nil {
+		log.Printf("%w", err)
+		http.Error(w, "Failed to get wokrout uuid", http.StatusInternalServerError)
+		return
+	}
+
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	params := database.CreateWorkoutSessionParams{
+		UserID:    userID, // You need to extract userID from context
+		WorkoutID: apiCfg.WorkoutSession.WorkoutID,
+	}
+
+	if !apiCfg.WorkoutSession.isActive {
+		workoutSession, err := apiCfg.DB.CreateWorkoutSession(ctx, params)
+		if err != nil {
+			log.Printf("%w", err)
+			http.Error(w, "Failed to create workout session.", http.StatusInternalServerError)
+			return
+		}
+
+		log.Printf("Workout session succesfully created!\n")
+		apiCfg.WorkoutSession.WorkoutSessionID = workoutSession
+		apiCfg.WorkoutSession.isActive = true
+	}
+
+	paramsExercise := database.CreateExerciseSessionParams{
+		UserID:            userID,
+		WorkoutExerciseID: exerciseID,
+	}
+
+	apiCfg.DB.CreateExerciseSession(ctx, paramsExercise)
+	log.Printf("Exercise session succesfully started!\n")
+
+	// Send JSON response
+	w.Header().Set("Content-Type", "application/json")
+}
+
+func (apiCfg *ApiConfig) GetActiveWorkoutSession(w http.ResponseWriter, r *http.Request) {
+}
+
+func (apiCfg *ApiConfig) StopActiveWorkoutSession(w http.ResponseWriter, r *http.Request) {
+}
+
+func (apiCfg *ApiConfig) FinishActiveWorkoutSession(w http.ResponseWriter, r *http.Request) {
+}
+
+func (apiCfg *ApiConfig) GetWorkoutSessionDetails(w http.ResponseWriter, r *http.Request) {
+}
+
+func (apiCfg *ApiConfig) FinishWorkoutSession(w http.ResponseWriter, r *http.Request) {
+}
+
+func (apiCfg *ApiConfig) LogExerciseSet(w http.ResponseWriter, r *http.Request) {
+}
+
+func (apiCfg *ApiConfig) StopExercise(w http.ResponseWriter, r *http.Request) {
+}
+
+func (apiCfg *ApiConfig) FinishExercise(w http.ResponseWriter, r *http.Request) {
 }
 
 // Get Workout Logs (Dummy Data)
