@@ -1,8 +1,10 @@
 version: "2"
 sql:
-  - schema: "internal/sql/schema"
-    queries: "internal/sql/queries"
+  - schema: "internal/migrations/schema"
+    queries: "internal/migrations/queries"
     engine: "postgresql"
     gen:
       go:
-        out: "internal/database"
+        out: "internal/services"
+        rename:
+            Exercise: "Exercises"
