@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github/cheezecakee/fitrkr/internal/exercise/models"
+	m "github/cheezecakee/fitrkr/internal/exercise/models"
 )
 
 type Plan struct {
@@ -16,10 +16,10 @@ type Plan struct {
 	IsActive    bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
-	Exercises   []PlanExercise
+	Exercises   []PlanEx
 }
 
-type PlanExercise struct {
+type PlanEx struct {
 	ID         uint
 	PlanID     uint
 	ExerciseID uint
@@ -32,5 +32,5 @@ type PlanExercise struct {
 	Rest       int
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
-	Exercise   models.Exercise
+	Exercise   m.Exercise
 }

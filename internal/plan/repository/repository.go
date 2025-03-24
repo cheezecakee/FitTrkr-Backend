@@ -5,23 +5,23 @@ import (
 
 	"github.com/google/uuid"
 
-	"github/cheezecakee/fitrkr/internal/Plan/models"
+	m "github/cheezecakee/fitrkr/internal/plan/models"
 )
 
 type PlanRepository interface {
-	Create(ctx context.Context, plan *models.Plan) error
-	GetByID(ctx context.Context, id uint) (*models.Plan, error)
-	GetByUserID(ctx context.Context, userID uuid.UUID) ([]*models.Plan, error)
-	Update(ctx context.Context, plan *models.Plan) error
+	Create(ctx context.Context, plan *m.Plan) (*m.Plan, error)
+	GetByID(ctx context.Context, id uint) (*m.Plan, error)
+	GetByUserID(ctx context.Context, userID uuid.UUID) ([]*m.Plan, error)
+	Update(ctx context.Context, plan *m.Plan) error
 	Delete(ctx context.Context, id uint) error
-	List(ctx context.Context, offset, limit int) ([]*models.Plan, error)
+	List(ctx context.Context, offset, limit int) ([]*m.Plan, error)
 }
 
-type PlanExerciseRepository interface {
-	Create(ctx context.Context, planExercise *models.PlanExercise) error
-	GetByID(ctx context.Context, id uint) (*models.PlanExercise, error)
-	GetByPlanID(ctx context.Context, planID uint) ([]*models.PlanExercise, error)
-	Update(ctx context.Context, planExercise *models.PlanExercise) error
+type PlanExRepository interface {
+	Create(ctx context.Context, planEx *m.PlanEx) (*m.PlanEx, error)
+	GetByID(ctx context.Context, id uint) (*m.PlanEx, error)
+	GetByPlanID(ctx context.Context, planID uint) ([]*m.PlanEx, error)
+	Update(ctx context.Context, planEx *m.PlanEx) error
 	Delete(ctx context.Context, id uint) error
 	DeleteByPlanID(ctx context.Context, planID uint) error
 }
