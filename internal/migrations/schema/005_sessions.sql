@@ -3,7 +3,7 @@ CREATE TABLE sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id INT NOT NULL,
     plan_id INT,  -- Nullable, as a session may not follow a specific plan
-    name VARCHAR(255),
+    name VARCHAR(255), -- Name of the workout plan
     start_time TIMESTAMP NOT NULL,
     end_time TIMESTAMP,  -- Nullable until workout is completed
     notes TEXT,

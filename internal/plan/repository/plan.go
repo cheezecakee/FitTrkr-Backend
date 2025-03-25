@@ -13,7 +13,7 @@ type DBPlanRepo struct {
 	db *sql.DB
 }
 
-func NewPlan(db *sql.DB) PlanRepository {
+func NewPlan(db *sql.DB) PlanRepo {
 	return &DBPlanRepo{
 		db: db,
 	}

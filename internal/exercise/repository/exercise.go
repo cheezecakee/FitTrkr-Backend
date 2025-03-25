@@ -20,11 +20,8 @@ func New(db *sql.DB) ExerciseRepo {
 const createExercise = `INSERT INTO exercises (name, description, category, equipment) VALUES ($1, $2, $3, $4)`
 
 func (r *DBExerciseRepo) Create(ctx context.Context, exercise *m.Exercise) error {
-	err := r.db.QueryRowContext(ctx, createExercise, exercise.Name, exercise.Description, exercise.Category, exercise.Equipment).Scan(&exercise.ID)
-	if err != nil {
-		return err
-	}
-	return nil
+	_, err := r.db.ExecContext(ctx, createExercise, exercise.Name, exercise.Description, exercise.Category, exercise.Equipment)
+	return err
 }
 
 const getByExerciseID = `SELECT id, name, description, category, equipment,  created_at, updated_at FROM exercises WHERE id = $1 LIMIT 1`
@@ -186,6 +183,42 @@ func (r *DBExerciseRepo) List(ctx context.Context, offset, limit int) ([]*m.Exer
 	return exercises, err
 }
 
-const searchExecise = ``
+const searchExercise = `SELECT id, name, description, category, equipment, created_at, updated_at
+FROM exercises
+WHERE
+    name ILIKE '%' || $1 || '%' OR
+    description ILIKE '%' || $1 || '%' OR
+    category ILIKE '%' || $1 || '%' OR
+    equipment ILIKE '%' || $1 || '%'`
 
-func (r *DBExerciseRepo) Search(ctx context.Context, query string) ([]*m.Exercise, error) {}
+func (r *DBExerciseRepo) Search(ctx context.Context, query string) ([]*m.Exercise, error) {
+	rows, err := r.db.QueryContext(ctx, searchExercise, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var exercises []*m.Exercise
+	for rows.Next() {
+		exercise := &m.Exercise{}
+		err := rows.Scan(
+			&exercise.ID,
+			&exercise.Name,
+			&exercise.Description,
+			&exercise.Category,
+			&exercise.Equipment,
+			&exercise.CreatedAt,
+			&exercise.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		exercises = append(exercises, exercise)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return exercises, err
+}

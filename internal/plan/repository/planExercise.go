@@ -11,7 +11,7 @@ type DBPlanExRepo struct {
 	db *sql.DB
 }
 
-func NewPlanEx(db *sql.DB) PlanExRepository {
+func NewPlanEx(db *sql.DB) PlanExRepo {
 	return &DBPlanExRepo{
 		db: db,
 	}

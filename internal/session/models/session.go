@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github/cheezecakee/fitrkr/internal/exercise/models"
+	m "github/cheezecakee/fitrkr/internal/exercise/models"
 )
 
 type Session struct {
@@ -18,21 +18,21 @@ type Session struct {
 	Notes     string
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	Exercises []SessionExercise
+	Exercises []SessionEx
 }
 
-type SessionExercise struct {
+type SessionEx struct {
 	ID         uuid.UUID
 	SessionID  uuid.UUID
 	ExerciseID uint
 	Order      int
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
-	Sets       []ExerciseSet
-	Exercise   models.Exercise
+	Sets       []ExSet
+	Exercise   m.Exercise
 }
 
-type ExerciseSet struct {
+type ExSet struct {
 	ID                uint
 	SessionExerciseID uuid.UUID
 	SetNumber         int
