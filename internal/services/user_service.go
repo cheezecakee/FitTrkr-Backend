@@ -7,9 +7,9 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
-	m "github/cheezecakee/fitrkr/internal/user/model"
-	"github/cheezecakee/fitrkr/pkg/errors"
-	h "github/cheezecakee/fitrkr/pkg/helper"
+	m "github.com/cheezecakee/fitrkr/internal/models"
+	"github.com/cheezecakee/fitrkr/internal/repository"
+	h "github.com/cheezecakee/fitrkr/pkg/helper"
 )
 
 type UserService interface {
@@ -24,10 +24,10 @@ type UserService interface {
 }
 
 type DBUserService struct {
-	repo repo.UserRepo
+	repo repository.UserRepo
 }
 
-func NewUserService(repo repo.UserRepo) UserService {
+func NewUserService(repo repository.UserRepo) UserService {
 	return &DBUserService{repo: repo}
 }
 
@@ -35,24 +35,24 @@ func (s *DBUserService) Register(ctx context.Context, user *m.User) (*m.User, er
 	// Check for existing Email
 	existingUser, err := s.repo.GetByEmail(ctx, user.Email)
 	if err != nil && err != sql.ErrNoRows {
-		return nil, errors.ErrInternalServer
+		return nil, err
 	}
 	if existingUser != nil {
-		return nil, errors.ErrEmailExists
+		return nil, err
 	}
 
 	// Check for existing Username
 	existingUser, err = s.repo.GetByUsername(ctx, user.Username)
 	if err != nil && err != sql.ErrNoRows {
-		return nil, errors.ErrInternalServer
+		return nil, err
 	}
 	if existingUser != nil {
-		return nil, errors.ErrUsernameTaken
+		return nil, err
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.PasswordHash), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, errors.ErrInternalServer
+		return nil, err
 	}
 	user.PasswordHash = string(hashedPassword)
 
@@ -63,14 +63,14 @@ func (s *DBUserService) Login(ctx context.Context, email, password string) (*m.U
 	user, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {
 		if err != sql.ErrNoRows {
-			return nil, errors.ErrInvalidCredentials // No logging for security
+			return nil, err // No logging for security
 		}
-		return nil, errors.ErrInternalServer
+		return nil, err
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
-		return nil, errors.ErrInvalidCredentials
+		return nil, err
 	}
 
 	return user, nil
@@ -80,9 +80,9 @@ func (s *DBUserService) GetUserByID(ctx context.Context, id uuid.UUID) (*m.User,
 	user, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.ErrUserNotFound
+			return nil, err
 		}
-		return nil, errors.ErrInternalServer
+		return nil, err
 	}
 	return user, nil
 }
@@ -91,9 +91,9 @@ func (s *DBUserService) GetUserByEmail(ctx context.Context, email string) (*m.Us
 	user, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.ErrUserNotFound
+			return nil, err
 		}
-		return nil, errors.ErrInternalServer
+		return nil, err
 	}
 	return user, nil
 }
@@ -102,9 +102,9 @@ func (s *DBUserService) GetUserByUsername(ctx context.Context, username string) 
 	user, err := s.repo.GetByUsername(ctx, username)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.ErrUserNotFound
+			return nil, err
 		}
-		return nil, errors.ErrInternalServer
+		return nil, err
 	}
 	return user, nil
 }
@@ -113,15 +113,15 @@ func (s *DBUserService) Update(ctx context.Context, user *m.User) (*m.User, erro
 	existingUser, err := s.repo.GetByID(ctx, user.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.ErrUserNotFound
+			return nil, err
 		}
-		return nil, errors.ErrInternalServer
+		return nil, err
 	}
 
 	if user.PasswordHash != "" {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.PasswordHash), bcrypt.DefaultCost)
 		if err != nil {
-			return nil, errors.ErrInternalServer
+			return nil, err
 		}
 		user.PasswordHash = string(hashedPassword)
 	} else {
@@ -130,7 +130,7 @@ func (s *DBUserService) Update(ctx context.Context, user *m.User) (*m.User, erro
 
 	updatedUser, err := s.repo.Update(ctx, user)
 	if err != nil {
-		return nil, errors.ErrInternalServer
+		return nil, err
 	}
 
 	return updatedUser, nil
@@ -140,13 +140,13 @@ func (s *DBUserService) Delete(ctx context.Context, id uuid.UUID) error {
 	_, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return errors.ErrUserNotFound
+			return err
 		}
-		return errors.ErrInternalServer
+		return err
 	}
 
 	if err := s.repo.Delete(ctx, id); err != nil {
-		return errors.ErrInternalServer
+		return err
 	}
 
 	return nil
@@ -159,7 +159,7 @@ func (s *DBUserService) List(ctx context.Context, offset, limit int) ([]*m.User,
 	limit = h.Clamp(limit, 10, 100)
 	users, err := s.repo.List(ctx, offset, limit)
 	if err != nil {
-		return nil, errors.ErrInternalServer
+		return nil, err
 	}
 	return users, nil
 }

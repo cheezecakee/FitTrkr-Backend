@@ -5,7 +5,8 @@ import (
 
 	"github.com/google/uuid"
 
-	m "github/cheezecakee/fitrkr/internal/session/model"
+	m "github.com/cheezecakee/fitrkr/internal/models"
+	"github.com/cheezecakee/fitrkr/internal/repository"
 )
 
 type ExSetService interface {
@@ -18,10 +19,10 @@ type ExSetService interface {
 }
 
 type DBExSetService struct {
-	repo repo.ExSetRepo
+	repo repository.ExSetRepo
 }
 
-func NewExsetService(repo repo.ExSetRepo) ExSetService {
+func NewExsetService(repo repository.ExSetRepo) ExSetService {
 	return &DBExSetService{repo: repo}
 }
 

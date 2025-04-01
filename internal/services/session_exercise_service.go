@@ -5,7 +5,8 @@ import (
 
 	"github.com/google/uuid"
 
-	m "github/cheezecakee/fitrkr/internal/session/model"
+	m "github.com/cheezecakee/fitrkr/internal/models"
+	"github.com/cheezecakee/fitrkr/internal/repository"
 )
 
 type SessionExService interface {
@@ -18,10 +19,10 @@ type SessionExService interface {
 }
 
 type DBSessionExService struct {
-	repo repo.SessionExRepo
+	repo repository.SessionExRepo
 }
 
-func NewSessionExService(repo repo.SessionExRepo) SessionExService {
+func NewSessionExService(repo repository.SessionExRepo) SessionExService {
 	return &DBSessionExService{repo: repo}
 }
 

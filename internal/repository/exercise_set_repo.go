@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strings"
 
-	u "github.com/cheezecakee/go-backend-utils/pkg/util"
 	"github.com/google/uuid"
 
 	m "github.com/cheezecakee/fitrkr/internal/models"
+	"github.com/cheezecakee/fitrkr/internal/utils/transaction"
 )
 
 type ExSetRepo interface {
@@ -22,19 +22,19 @@ type ExSetRepo interface {
 }
 
 type DBExSetRepo struct {
-	*u.BaseRepository
+	tx transaction.BaseRepository
 }
 
 func NewExSet(db *sql.DB) ExSetRepo {
 	return &DBExSetRepo{
-		u.NewBaseRepository(db),
+		tx: transaction.NewBaseRepository(db),
 	}
 }
 
 const createExSet = `INSERT INTO exercise_sets (session_exercise_id, set_number, reps, weight, duration, distance, notes) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
 
 func (r *DBExSetRepo) Create(ctx context.Context, set *m.ExSet) error {
-	err := r.WithTransaction(ctx, func(tx *sql.Tx) error {
+	err := r.tx.WithTransaction(ctx, func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, createExSet, set.SessionExerciseID, set.Number, set.Reps, set.Weight, set.Duration, set.Distance, set.Notes)
 		return err
 	})
@@ -50,7 +50,7 @@ func (r *DBExSetRepo) CreateBatch(ctx context.Context, sets []*m.ExSet) error {
 	if len(sets) == 0 {
 		return nil
 	}
-	return r.WithTransaction(ctx, func(tx *sql.Tx) error {
+	return r.tx.WithTransaction(ctx, func(tx *sql.Tx) error {
 		valueStrings := make([]string, 0, len(sets))
 		valueArgs := make([]any, 0, len(sets)*7)
 
@@ -69,7 +69,7 @@ func (r *DBExSetRepo) CreateBatch(ctx context.Context, sets []*m.ExSet) error {
 const getExSetByID = `SELECT id, session_exercise_id, set_number, reps, weight, duration, distance, notes FROM exercise_sets WHERE id = $1`
 
 func (r *DBExSetRepo) GetByID(ctx context.Context, id uint) (*m.ExSet, error) {
-	row := r.DB.QueryRowContext(ctx, getExSetByID, id)
+	row := r.tx.DB().QueryRowContext(ctx, getExSetByID, id)
 	exSet := &m.ExSet{}
 	err := row.Scan(
 		&exSet.ID,
@@ -88,7 +88,7 @@ func (r *DBExSetRepo) GetByID(ctx context.Context, id uint) (*m.ExSet, error) {
 const getExSetBySessionExID = `SELECT id, session_exercise_id, set_number, reps, weight, duration, distance, notes FROM exercise_sets WHERE id = $1`
 
 func (r *DBExSetRepo) GetBySessionExID(ctx context.Context, sessionExID uuid.UUID) ([]*m.ExSet, error) {
-	rows, err := r.DB.QueryContext(ctx, getExSetBySessionExID, sessionExID)
+	rows, err := r.tx.DB().QueryContext(ctx, getExSetBySessionExID, sessionExID)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +130,7 @@ SET set_number = COALESCE($2, set_number),
 WHERE id = $1`
 
 func (r *DBExSetRepo) Update(ctx context.Context, set *m.ExSet) error {
-	err := r.WithTransaction(ctx, func(tx *sql.Tx) error {
+	err := r.tx.WithTransaction(ctx, func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, updateExSet, set.ID, set.Number, set.Reps, set.Weight, set.Duration, set.Distance, set.Notes)
 		return err
 	})
@@ -143,7 +143,7 @@ func (r *DBExSetRepo) Update(ctx context.Context, set *m.ExSet) error {
 const deleteExSet = `DELETE FROM exercise_sets WHERE id = $1`
 
 func (r *DBExSetRepo) Delete(ctx context.Context, id uint) error {
-	err := r.WithTransaction(ctx, func(tx *sql.Tx) error {
+	err := r.tx.WithTransaction(ctx, func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, deleteExSet, id)
 		return err
 	})

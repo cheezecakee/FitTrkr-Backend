@@ -4,9 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	u "github.com/cheezecakee/go-backend-utils/pkg/util"
-
 	m "github.com/cheezecakee/fitrkr/internal/models"
+	"github.com/cheezecakee/fitrkr/internal/utils/transaction"
 )
 
 type ExerciseRepo interface {
@@ -22,19 +21,19 @@ type ExerciseRepo interface {
 }
 
 type DBExerciseRepo struct {
-	*u.BaseRepository
+	tx transaction.BaseRepository
 }
 
 func NewExerciseRepo(db *sql.DB) ExerciseRepo {
 	return &DBExerciseRepo{
-		u.NewBaseRepository(db),
+		tx: transaction.NewBaseRepository(db),
 	}
 }
 
 const createExercise = `INSERT INTO exercises (name, description, category, equipment) VALUES ($1, $2, $3, $4)`
 
 func (r *DBExerciseRepo) Create(ctx context.Context, exercise *m.Exercise) error {
-	err := r.WithTransaction(ctx, func(tx *sql.Tx) error {
+	err := r.tx.WithTransaction(ctx, func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, createExercise, exercise.Name, exercise.Description, exercise.Category, exercise.Equipment)
 		return err
 	})
@@ -48,7 +47,7 @@ const getExByExerciseID = `SELECT id, name, description, category, equipment,  c
 
 func (r *DBExerciseRepo) GetByID(ctx context.Context, id uint) (*m.Exercise, error) {
 	exercise := &m.Exercise{}
-	row := r.DB.QueryRowContext(ctx, getExByExerciseID, id)
+	row := r.tx.DB().QueryRowContext(ctx, getExByExerciseID, id)
 	err := row.Scan(
 		&exercise.ID,
 		&exercise.Name,
@@ -66,7 +65,7 @@ const getExByExerciseName = `SELECT id, name, description, category, equipment, 
 
 func (r *DBExerciseRepo) GetByName(ctx context.Context, name string) (*m.Exercise, error) {
 	exercise := &m.Exercise{}
-	row := r.DB.QueryRowContext(ctx, getExByExerciseName, name)
+	row := r.tx.DB().QueryRowContext(ctx, getExByExerciseName, name)
 	err := row.Scan(
 		&exercise.ID,
 		&exercise.Name,
@@ -83,7 +82,7 @@ func (r *DBExerciseRepo) GetByName(ctx context.Context, name string) (*m.Exercis
 const getExByExerciseCategory = `SELECT id, name, description, category, equipment,  created_at, updated_at FROM exercises WHERE category = $1`
 
 func (r *DBExerciseRepo) GetByCategory(ctx context.Context, category string) ([]*m.Exercise, error) {
-	rows, err := r.DB.QueryContext(ctx, getExByExerciseCategory, category)
+	rows, err := r.tx.DB().QueryContext(ctx, getExByExerciseCategory, category)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +116,7 @@ func (r *DBExerciseRepo) GetByCategory(ctx context.Context, category string) ([]
 const getExByExerciseEquipment = `SELECT id, name, description, category, equipment,  created_at, updated_at FROM exercises WHERE equipment = $1`
 
 func (r *DBExerciseRepo) GetByEquipment(ctx context.Context, equipment string) ([]*m.Exercise, error) {
-	rows, err := r.DB.QueryContext(ctx, getExByExerciseEquipment, equipment)
+	rows, err := r.tx.DB().QueryContext(ctx, getExByExerciseEquipment, equipment)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +157,7 @@ SET
 WHERE id = $1`
 
 func (r *DBExerciseRepo) Update(ctx context.Context, exercise *m.Exercise) error {
-	err := r.WithTransaction(ctx, func(tx *sql.Tx) error {
+	err := r.tx.WithTransaction(ctx, func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, updateExercise, exercise.ID, exercise.Name, exercise.Description, exercise.Category, exercise.Equipment)
 		return err
 	})
@@ -171,7 +170,7 @@ func (r *DBExerciseRepo) Update(ctx context.Context, exercise *m.Exercise) error
 const deleteExercise = `DELETE FROM exercises WHERE id = $1`
 
 func (r *DBExerciseRepo) Delete(ctx context.Context, id uint) error {
-	err := r.WithTransaction(ctx, func(tx *sql.Tx) error {
+	err := r.tx.WithTransaction(ctx, func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, deleteExercise, id)
 		return err
 	})
@@ -184,7 +183,7 @@ func (r *DBExerciseRepo) Delete(ctx context.Context, id uint) error {
 const listExercises = `SELECT id, name, description, category, equipment,  created_at, updated_at FROM exercises OFFSET $1 LIMIT $2`
 
 func (r *DBExerciseRepo) List(ctx context.Context, offset, limit int) ([]*m.Exercise, error) {
-	rows, err := r.DB.QueryContext(ctx, listExercises, offset, limit)
+	rows, err := r.tx.DB().QueryContext(ctx, listExercises, offset, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +223,7 @@ WHERE
     equipment ILIKE '%' || $1 || '%'`
 
 func (r *DBExerciseRepo) Search(ctx context.Context, query string) ([]*m.Exercise, error) {
-	rows, err := r.DB.QueryContext(ctx, searchExercise, query)
+	rows, err := r.tx.DB().QueryContext(ctx, searchExercise, query)
 	if err != nil {
 		return nil, err
 	}

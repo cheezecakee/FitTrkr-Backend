@@ -5,7 +5,8 @@ import (
 
 	"github.com/google/uuid"
 
-	m "github/cheezecakee/fitrkr/internal/plan/model"
+	m "github.com/cheezecakee/fitrkr/internal/models"
+	"github.com/cheezecakee/fitrkr/internal/repository"
 )
 
 type PlanService interface {
@@ -18,10 +19,10 @@ type PlanService interface {
 }
 
 type DBPlanService struct {
-	repo repo.PlanRepo
+	repo repository.PlanRepo
 }
 
-func NewPlanService(repo repo.PlanRepo) PlanService {
+func NewPlanService(repo repository.PlanRepo) PlanService {
 	return &DBPlanService{repo: repo}
 }
 

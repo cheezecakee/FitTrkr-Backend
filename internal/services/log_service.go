@@ -5,7 +5,8 @@ import (
 
 	"github.com/google/uuid"
 
-	m "github/cheezecakee/fitrkr/internal/log/model"
+	m "github.com/cheezecakee/fitrkr/internal/models"
+	"github.com/cheezecakee/fitrkr/internal/repository"
 )
 
 type LogService interface {
@@ -22,10 +23,10 @@ type LogService interface {
 }
 
 type DBLogService struct {
-	repo repo.LogRepo
+	repo repository.LogRepo
 }
 
-func NewLogService(repo repo.LogRepo) LogService {
+func NewLogService(repo repository.LogRepo) LogService {
 	return &DBLogService{repo: repo}
 }
 

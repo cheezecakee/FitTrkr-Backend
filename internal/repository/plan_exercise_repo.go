@@ -4,9 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	u "github.com/cheezecakee/go-backend-utils/pkg/util"
-
 	m "github.com/cheezecakee/fitrkr/internal/models"
+	"github.com/cheezecakee/fitrkr/internal/utils/transaction"
 )
 
 type PlanExRepo interface {
@@ -19,12 +18,12 @@ type PlanExRepo interface {
 }
 
 type DBPlanExRepo struct {
-	*u.BaseRepository
+	tx transaction.BaseRepository
 }
 
 func NewPlanExRepo(db *sql.DB) PlanExRepo {
 	return &DBPlanExRepo{
-		u.NewBaseRepository(db),
+		tx: transaction.NewBaseRepository(db),
 	}
 }
 
@@ -52,7 +51,7 @@ VALUES (
 RETURNING id`
 
 func (r *DBPlanExRepo) Create(ctx context.Context, planEx *m.PlanEx) (*m.PlanEx, error) {
-	err := r.WithTransaction(ctx, func(tx *sql.Tx) error {
+	err := r.tx.WithTransaction(ctx, func(tx *sql.Tx) error {
 		return tx.QueryRowContext(ctx, createPlanEx, planEx.PlanID, planEx.ExerciseID, planEx.Name, planEx.Sets, planEx.Reps, planEx.Weight, planEx.Interval, planEx.Rest).Scan(&planEx.ID)
 	})
 	if err != nil {
@@ -65,7 +64,7 @@ const getPlanExByID = `SELECT id, plan_id, exercise_id, name, sets, reps, weight
 
 func (r *DBPlanExRepo) GetByID(ctx context.Context, id uint) (*m.PlanEx, error) {
 	planEx := &m.PlanEx{}
-	row := r.DB.QueryRowContext(ctx, getPlanExByID, id)
+	row := r.tx.DB().QueryRowContext(ctx, getPlanExByID, id)
 	err := row.Scan(
 		&planEx.ID,
 		&planEx.PlanID,
@@ -86,7 +85,7 @@ func (r *DBPlanExRepo) GetByID(ctx context.Context, id uint) (*m.PlanEx, error) 
 const getPlanExByPlanID = `SELECT id, plan_id, exercise_id, name, sets, reps, weight, interval, rest, created_at, updated_at FROM plans_exercises WHERE plan_id = $1`
 
 func (r *DBPlanExRepo) GetByPlanID(ctx context.Context, planID uint) ([]*m.PlanEx, error) {
-	rows, err := r.DB.QueryContext(ctx, getPlanExByPlanID, planID)
+	rows, err := r.tx.DB().QueryContext(ctx, getPlanExByPlanID, planID)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +131,7 @@ SET exercise_id =  COALESCE(NULLIF($3,  ''), exercise_id),
 WHERE id = $1 AND plan_id = $2`
 
 func (r *DBPlanExRepo) Update(ctx context.Context, planEx *m.PlanEx) error {
-	err := r.WithTransaction(ctx, func(tx *sql.Tx) error {
+	err := r.tx.WithTransaction(ctx, func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, updatePlanEx, planEx.ID, planEx.PlanID, planEx.ExerciseID, planEx.Name, planEx.Sets, planEx.Reps, planEx.Weight, planEx.Interval, planEx.Rest)
 		return err
 	})
@@ -145,7 +144,7 @@ func (r *DBPlanExRepo) Update(ctx context.Context, planEx *m.PlanEx) error {
 const deletePlanEx = `DELETE FROM plans_exercises WHERE id = $1`
 
 func (r *DBPlanExRepo) Delete(ctx context.Context, id uint) error {
-	err := r.WithTransaction(ctx, func(tx *sql.Tx) error {
+	err := r.tx.WithTransaction(ctx, func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, deletePlanEx, id)
 		return err
 	})
@@ -158,7 +157,7 @@ func (r *DBPlanExRepo) Delete(ctx context.Context, id uint) error {
 const deletePlanExByPlanID = `DELETE FROM plans_exercises WHERE plan_id = $1`
 
 func (r *DBPlanExRepo) DeleteByPlanID(ctx context.Context, planID uint) error {
-	err := r.WithTransaction(ctx, func(tx *sql.Tx) error {
+	err := r.tx.WithTransaction(ctx, func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, deletePlanEx, planID)
 		return err
 	})

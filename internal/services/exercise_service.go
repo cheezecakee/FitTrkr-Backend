@@ -3,7 +3,8 @@ package service
 import (
 	"context"
 
-	m "github/cheezecakee/fitrkr/internal/exercise/models"
+	m "github.com/cheezecakee/fitrkr/internal/models"
+	"github.com/cheezecakee/fitrkr/internal/repository"
 )
 
 type ExerciseService interface {
@@ -19,10 +20,10 @@ type ExerciseService interface {
 }
 
 type DBExerciseService struct {
-	repo repo.ExerciseRepo
+	repo repository.ExerciseRepo
 }
 
-func NewExerciseService(repo repo.ExerciseRepo) ExerciseService {
+func NewExerciseService(repo repository.ExerciseRepo) ExerciseService {
 	return &DBExerciseService{repo: repo}
 }
 

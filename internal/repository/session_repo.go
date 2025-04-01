@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 
-	u "github.com/cheezecakee/go-backend-utils/pkg/util"
 	"github.com/google/uuid"
 
 	m "github.com/cheezecakee/fitrkr/internal/models"
+	"github.com/cheezecakee/fitrkr/internal/utils/transaction"
 )
 
 type SessionRepo interface {
@@ -22,19 +22,19 @@ type SessionRepo interface {
 }
 
 type DBSessionRepo struct {
-	*u.BaseRepository
+	tx transaction.BaseRepository
 }
 
 func NewSessionRepo(db *sql.DB) SessionRepo {
 	return &DBSessionRepo{
-		u.NewBaseRepository(db),
+		tx: transaction.NewBaseRepository(db),
 	}
 }
 
 const createSesssion = `INSERT INTO sessions (user_id, plan_id, name, start_time) VALUES ($1, $2, $3, NOW()) RETURNING id`
 
 func (r *DBSessionRepo) Create(ctx context.Context, session *m.Session) (*m.Session, error) {
-	err := r.WithTransaction(ctx, func(tx *sql.Tx) error {
+	err := r.tx.WithTransaction(ctx, func(tx *sql.Tx) error {
 		return tx.QueryRowContext(ctx, createSesssion, session.UserID, session.PlanID, session.Name).Scan(session.ID)
 	})
 	if err != nil {
@@ -47,7 +47,7 @@ const getSessionByID = `SELECT id, user_id, plan_id, name, start_time, end_time,
 
 func (r *DBSessionRepo) GetByID(ctx context.Context, id uuid.UUID) (*m.Session, error) {
 	session := &m.Session{}
-	row := r.DB.QueryRowContext(ctx, getSessionByID, id)
+	row := r.tx.DB().QueryRowContext(ctx, getSessionByID, id)
 	err := row.Scan(
 		&session.ID,
 		&session.UserID,
@@ -65,7 +65,7 @@ func (r *DBSessionRepo) GetByID(ctx context.Context, id uuid.UUID) (*m.Session, 
 const getSessionByUserID = `SELECT id, user_id, plan_id, name, start_time, end_time, notes, created_at, updated_at FROM sessions WHERE user_id = $1`
 
 func (r *DBSessionRepo) GetByUserID(ctx context.Context, userID uuid.UUID) ([]*m.Session, error) {
-	rows, err := r.DB.QueryContext(ctx, getSessionByUserID, userID)
+	rows, err := r.tx.DB().QueryContext(ctx, getSessionByUserID, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (r *DBSessionRepo) GetByUserID(ctx context.Context, userID uuid.UUID) ([]*m
 const getSessionByPlanID = `SELECT id, user_id, plan_id, name, start_time, end_time, notes, created_at, updated_at FROM sessions WHERE plan_id = $1`
 
 func (r *DBSessionRepo) GetByPlanID(ctx context.Context, planID uint) ([]*m.Session, error) {
-	rows, err := r.DB.QueryContext(ctx, getSessionByPlanID, planID)
+	rows, err := r.tx.DB().QueryContext(ctx, getSessionByPlanID, planID)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +145,7 @@ SET
 WHERE id = $1`
 
 func (r *DBSessionRepo) Update(ctx context.Context, session *m.Session) error {
-	err := r.WithTransaction(ctx, func(tx *sql.Tx) error {
+	err := r.tx.WithTransaction(ctx, func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, updateSession, session.ID, session.Notes)
 		return err
 	})
@@ -158,7 +158,7 @@ func (r *DBSessionRepo) Update(ctx context.Context, session *m.Session) error {
 const deleteSession = `DELETE FROM sessions WHERE id = $1`
 
 func (r *DBSessionRepo) Delete(ctx context.Context, id uuid.UUID) error {
-	err := r.WithTransaction(ctx, func(tx *sql.Tx) error {
+	err := r.tx.WithTransaction(ctx, func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, deleteSession, id)
 		return err
 	})
@@ -171,7 +171,7 @@ func (r *DBSessionRepo) Delete(ctx context.Context, id uuid.UUID) error {
 const listSession = `SELECT id, user_id, plan_id, name, start_time, end_time, notes, created_at, updated_at FROM sessions OFFSET $1 LIMIT $2`
 
 func (r *DBSessionRepo) List(ctx context.Context, offset, limit int) ([]*m.Session, error) {
-	rows, err := r.DB.QueryContext(ctx, listSession, offset, limit)
+	rows, err := r.tx.DB().QueryContext(ctx, listSession, offset, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +213,7 @@ AND created_at = BETWEEN $2 AND $3
 ORDER BY created_at DESC`
 
 func (r *DBSessionRepo) ListByDateRange(ctx context.Context, userID uuid.UUID, startDate, endDate string) ([]*m.Session, error) {
-	rows, err := r.DB.QueryContext(ctx, listSessionByDateRange, userID, startDate, endDate)
+	rows, err := r.tx.DB().QueryContext(ctx, listSessionByDateRange, userID, startDate, endDate)
 	if err != nil {
 		return nil, err
 	}

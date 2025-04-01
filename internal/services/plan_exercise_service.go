@@ -3,7 +3,8 @@ package service
 import (
 	"context"
 
-	m "github/cheezecakee/fitrkr/internal/plan/model"
+	m "github.com/cheezecakee/fitrkr/internal/models"
+	"github.com/cheezecakee/fitrkr/internal/repository"
 )
 
 type PlanExService interface {
@@ -16,10 +17,10 @@ type PlanExService interface {
 }
 
 type DBPlanExService struct {
-	repo repo.PlanExRepo
+	repo repository.PlanExRepo
 }
 
-func NewPlanExService(repo repo.PlanExRepo) PlanExService {
+func NewPlanExService(repo repository.PlanExRepo) PlanExService {
 	return &DBPlanExService{repo: repo}
 }
 

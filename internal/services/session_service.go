@@ -5,7 +5,8 @@ import (
 
 	"github.com/google/uuid"
 
-	m "github/cheezecakee/fitrkr/internal/session/model"
+	m "github.com/cheezecakee/fitrkr/internal/models"
+	"github.com/cheezecakee/fitrkr/internal/repository"
 )
 
 type SessionService interface {
@@ -20,10 +21,10 @@ type SessionService interface {
 }
 
 type DBSessionService struct {
-	repo repo.SessionRepo
+	repo repository.SessionRepo
 }
 
-func NewSessionService(repo repo.SessionRepo) SessionService {
+func NewSessionService(repo repository.SessionRepo) SessionService {
 	return &DBSessionService{repo: repo}
 }
 

@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 
-	u "github.com/cheezecakee/go-backend-utils/pkg/util"
 	"github.com/google/uuid"
 
 	m "github.com/cheezecakee/fitrkr/internal/models"
+	"github.com/cheezecakee/fitrkr/internal/utils/transaction"
 )
 
 type LogRepo interface {
@@ -24,19 +24,19 @@ type LogRepo interface {
 }
 
 type DBLogRepo struct {
-	*u.BaseRepository
+	tx transaction.BaseRepository
 }
 
 func NewLogRepo(db *sql.DB) LogRepo {
 	return &DBLogRepo{
-		u.NewBaseRepository(db),
+		tx: transaction.NewBaseRepository(db),
 	}
 }
 
 const createLog = `INSERT INTO logs (user_id, plan_id, metadata, type, priority, message, pr) Values ($1, $2, $3, $4, $5, $6, $7)`
 
 func (r *DBLogRepo) Create(ctx context.Context, log *m.Log) error {
-	err := r.WithTransaction(ctx, func(tx *sql.Tx) error {
+	err := r.tx.WithTransaction(ctx, func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, createLog, log.UserID, log.PlanID, log.Context, log.Type, log.Priority, log.Message, log.Pr)
 		return err
 	})
@@ -50,7 +50,7 @@ const getLogByID = `SELECT id, user_id, plan_id, metadata, type, priority, messa
 
 func (r *DBLogRepo) GetByID(ctx context.Context, id uint) (*m.Log, error) {
 	log := &m.Log{}
-	row := r.DB.QueryRowContext(ctx, getLogByID, id)
+	row := r.tx.DB().QueryRowContext(ctx, getLogByID, id)
 	err := row.Scan(
 		&log.ID,
 		&log.UserID,
@@ -67,7 +67,7 @@ func (r *DBLogRepo) GetByID(ctx context.Context, id uint) (*m.Log, error) {
 const getLogByUserID = `SELECT id, user_id, plan_id, metadata, type, priority, message, pr FROM logs WHERE user_id = $1`
 
 func (r *DBLogRepo) GetByUserID(ctx context.Context, userID uuid.UUID) ([]*m.Log, error) {
-	rows, err := r.DB.QueryContext(ctx, getLogByUserID, userID)
+	rows, err := r.tx.DB().QueryContext(ctx, getLogByUserID, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func (r *DBLogRepo) GetByUserID(ctx context.Context, userID uuid.UUID) ([]*m.Log
 const getLogByPlanID = `SELECT id, user_id, plan_id, metadata, type, priority, message, pr FROM logs WHERE plan_id = $1`
 
 func (r *DBLogRepo) GetByPlanID(ctx context.Context, planID uint) ([]*m.Log, error) {
-	rows, err := r.DB.QueryContext(ctx, getLogByPlanID, planID)
+	rows, err := r.tx.DB().QueryContext(ctx, getLogByPlanID, planID)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +135,7 @@ func (r *DBLogRepo) GetByPlanID(ctx context.Context, planID uint) ([]*m.Log, err
 const getLogByType = `SELECT id, user_id, plan_id, metadata, type, priority, message, pr FROM logs WHERE type = $1`
 
 func (r *DBLogRepo) GetByType(ctx context.Context, logType string) ([]*m.Log, error) {
-	rows, err := r.DB.QueryContext(ctx, getLogByType, logType)
+	rows, err := r.tx.DB().QueryContext(ctx, getLogByType, logType)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +169,7 @@ func (r *DBLogRepo) GetByType(ctx context.Context, logType string) ([]*m.Log, er
 const getLogByPriority = `SELECT id, user_id, plan_id, metadata, type, priority, message, pr FROM logs WHERE priority = $1`
 
 func (r *DBLogRepo) GetByPriority(ctx context.Context, priority string) ([]*m.Log, error) {
-	rows, err := r.DB.QueryContext(ctx, getLogByPriority, priority)
+	rows, err := r.tx.DB().QueryContext(ctx, getLogByPriority, priority)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +203,7 @@ func (r *DBLogRepo) GetByPriority(ctx context.Context, priority string) ([]*m.Lo
 const deleteLog = `DELETE FROM logs WHERE id = $1`
 
 func (r *DBLogRepo) Delete(ctx context.Context, id uint) error {
-	err := r.WithTransaction(ctx, func(tx *sql.Tx) error {
+	err := r.tx.WithTransaction(ctx, func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, deleteLog, id)
 		return err
 	})
@@ -216,7 +216,7 @@ func (r *DBLogRepo) Delete(ctx context.Context, id uint) error {
 const listLog = `SELECT id, user_id, plan_id, metadata, type, priority, message, pr FROM logs OFFSET $1 LIMIT $2`
 
 func (r *DBLogRepo) List(ctx context.Context, offset, limit int) ([]*m.Log, error) {
-	rows, err := r.DB.QueryContext(ctx, listLog, offset, limit)
+	rows, err := r.tx.DB().QueryContext(ctx, listLog, offset, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -254,7 +254,7 @@ AND created_at BETWEEN $2 AND $3
 ORDER BY created_at DESC`
 
 func (r *DBLogRepo) ListByRange(ctx context.Context, userID uuid.UUID, startDate, endDate string) ([]*m.Log, error) {
-	rows, err := r.DB.QueryContext(ctx, listByLogRange, userID, startDate, endDate)
+	rows, err := r.tx.DB().QueryContext(ctx, listByLogRange, userID, startDate, endDate)
 	if err != nil {
 		return nil, err
 	}
@@ -288,7 +288,7 @@ func (r *DBLogRepo) ListByRange(ctx context.Context, userID uuid.UUID, startDate
 const getLogPRs = `SELECT pr FROM logs WHERE user_id = $1`
 
 func (r *DBLogRepo) GetPRs(ctx context.Context, userID uuid.UUID) ([]*m.Log, error) {
-	rows, err := r.DB.QueryContext(ctx, getLogPRs, userID)
+	rows, err := r.tx.DB().QueryContext(ctx, getLogPRs, userID)
 	if err != nil {
 		return nil, err
 	}

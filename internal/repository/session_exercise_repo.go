@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 
-	u "github.com/cheezecakee/go-backend-utils/pkg/util"
 	"github.com/google/uuid"
 
 	m "github.com/cheezecakee/fitrkr/internal/models"
+	"github.com/cheezecakee/fitrkr/internal/utils/transaction"
 )
 
 type SessionExRepo interface {
@@ -20,19 +20,19 @@ type SessionExRepo interface {
 }
 
 type DBSessionExRepo struct {
-	*u.BaseRepository
+	tx transaction.BaseRepository
 }
 
 func NewSessionExRepo(db *sql.DB) SessionExRepo {
 	return &DBSessionExRepo{
-		u.NewBaseRepository(db),
+		tx: transaction.NewBaseRepository(db),
 	}
 }
 
 const createSessionEx = `INSERT INTO sessions_exercises (session_id, exercise_id, "order") VALUES ($1, $2, $3) RETURNING id`
 
 func (r *DBSessionExRepo) Create(ctx context.Context, sessionEx *m.SessionEx) (*m.SessionEx, error) {
-	err := r.WithTransaction(ctx, func(tx *sql.Tx) error {
+	err := r.tx.WithTransaction(ctx, func(tx *sql.Tx) error {
 		return tx.QueryRowContext(ctx, createSessionEx, sessionEx.SessionID, sessionEx.ExerciseID, sessionEx.Order).Scan(sessionEx.ID)
 	})
 	if err != nil {
@@ -45,7 +45,7 @@ func (r *DBSessionExRepo) Create(ctx context.Context, sessionEx *m.SessionEx) (*
 const getSessionExByID = `SELECT id, session_id, exercise_id, "order", created_at, updated_at FROM sessions_exercises WHERE id = $1 LIMIT 1`
 
 func (r *DBSessionExRepo) GetByID(ctx context.Context, id uuid.UUID) (*m.SessionEx, error) {
-	row := r.DB.QueryRowContext(ctx, getSessionExByID, id)
+	row := r.tx.DB().QueryRowContext(ctx, getSessionExByID, id)
 	sessionEx := &m.SessionEx{}
 	err := row.Scan(
 		&sessionEx.ID,
@@ -62,7 +62,7 @@ func (r *DBSessionExRepo) GetByID(ctx context.Context, id uuid.UUID) (*m.Session
 const getSessionExBySessionID = `SELECT id, session_id, exercise_id, "order", created_at, updated_at FROM sessions_exercises WHERE session_id = $1`
 
 func (r *DBSessionExRepo) GetBysessionID(ctx context.Context, sessionID uuid.UUID) ([]*m.SessionEx, error) {
-	rows, err := r.DB.QueryContext(ctx, getSessionExBySessionID, sessionID)
+	rows, err := r.tx.DB().QueryContext(ctx, getSessionExBySessionID, sessionID)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ SET "order" = $2, updated_at = NOW()
 WHERE id = $1`
 
 func (r *DBSessionExRepo) Update(ctx context.Context, sessionEx *m.SessionEx) error {
-	err := r.WithTransaction(ctx, func(tx *sql.Tx) error {
+	err := r.tx.WithTransaction(ctx, func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, updateSessionEx, sessionEx.ID, sessionEx.Order)
 		return err
 	})
@@ -111,7 +111,7 @@ func (r *DBSessionExRepo) Update(ctx context.Context, sessionEx *m.SessionEx) er
 const deleteSessionEx = `DELETE FROM sessions_exercises WHERE id = $1`
 
 func (r *DBSessionExRepo) Delete(ctx context.Context, id uuid.UUID) error {
-	err := r.WithTransaction(ctx, func(tx *sql.Tx) error {
+	err := r.tx.WithTransaction(ctx, func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, deleteSessionEx, id)
 		return err
 	})
@@ -124,7 +124,7 @@ func (r *DBSessionExRepo) Delete(ctx context.Context, id uuid.UUID) error {
 const deleteSessionExBySessionID = `DELETE FROM sessions_exercises WHERE session_id = $1`
 
 func (r *DBSessionExRepo) DeleteBysessionID(ctx context.Context, sessionID uuid.UUID) error {
-	err := r.WithTransaction(ctx, func(tx *sql.Tx) error {
+	err := r.tx.WithTransaction(ctx, func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, deleteSessionEx, sessionID)
 		return err
 	})
