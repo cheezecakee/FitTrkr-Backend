@@ -9,7 +9,7 @@ import (
 
 	m "github.com/cheezecakee/fitrkr/internal/models"
 	"github.com/cheezecakee/fitrkr/internal/repository"
-	h "github.com/cheezecakee/fitrkr/pkg/helper"
+	"github.com/cheezecakee/fitrkr/internal/utils/helper"
 )
 
 type UserService interface {
@@ -24,11 +24,12 @@ type UserService interface {
 }
 
 type DBUserService struct {
-	repo repository.UserRepo
+	repo   repository.UserRepo
+	helper *helper.Helper
 }
 
-func NewUserService(repo repository.UserRepo) UserService {
-	return &DBUserService{repo: repo}
+func NewUserService(repo repository.UserRepo, helper *helper.Helper) UserService {
+	return &DBUserService{repo: repo, helper: helper}
 }
 
 func (s *DBUserService) Register(ctx context.Context, user *m.User) (*m.User, error) {
@@ -156,7 +157,7 @@ func (s *DBUserService) List(ctx context.Context, offset, limit int) ([]*m.User,
 	if offset < 0 {
 		offset = 0
 	}
-	limit = h.Clamp(limit, 10, 100)
+	limit = s.helper.Clamp(limit, 10, 100)
 	users, err := s.repo.List(ctx, offset, limit)
 	if err != nil {
 		return nil, err

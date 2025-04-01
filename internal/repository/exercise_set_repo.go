@@ -25,7 +25,7 @@ type DBExSetRepo struct {
 	tx transaction.BaseRepository
 }
 
-func NewExSet(db *sql.DB) ExSetRepo {
+func NewExSetRepo(db *sql.DB) ExSetRepo {
 	return &DBExSetRepo{
 		tx: transaction.NewBaseRepository(db),
 	}

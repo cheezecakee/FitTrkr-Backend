@@ -17,3 +17,14 @@ type User struct {
 	UpdatedAt    time.Time
 	IsPremium    bool
 }
+
+type UserResponse struct {
+	ID        uuid.UUID
+	Username  string
+	FirstName string
+	LastName  string
+	Email     string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	IsPremium bool
+}
