@@ -5,7 +5,7 @@ import (
 
 	"github.com/cheezecakee/fitrkr/internal/repository"
 	"github.com/cheezecakee/fitrkr/internal/service"
-	"github.com/cheezecakee/fitrkr/internal/utils/helper"
+	"github.com/cheezecakee/fitrkr/internal/utils/auth"
 )
 
 type App struct {
@@ -20,7 +20,7 @@ type App struct {
 	ExerciseSvc  service.ExerciseService
 }
 
-func NewApp(DBConnstring string, helper *helper.Helper) *App {
+func NewApp(DBConnstring string, jwtMgr auth.JWT) *App {
 	db := repository.NewDB(DBConnstring)
 
 	// Initialize repos
@@ -35,7 +35,7 @@ func NewApp(DBConnstring string, helper *helper.Helper) *App {
 
 	return &App{
 		DB:           db,
-		UserSvc:      service.NewUserService(UserRepo, helper),
+		UserSvc:      service.NewUserService(UserRepo, jwtMgr),
 		PlanSvc:      service.NewPlanService(PlanRepo),
 		PlanExSvc:    service.NewPlanExService(PlanExRepo),
 		SessionSvc:   service.NewSessionService(SessionRepo),

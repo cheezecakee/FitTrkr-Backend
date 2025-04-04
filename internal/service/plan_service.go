@@ -2,11 +2,17 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 
 	m "github.com/cheezecakee/fitrkr/internal/models"
 	"github.com/cheezecakee/fitrkr/internal/repository"
+)
+
+var (
+	ErrInvalidPlan  = errors.New("invalid plan")
+	ErrPlanNotFound = errors.New("plan not found")
 )
 
 type PlanService interface {

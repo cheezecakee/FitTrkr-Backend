@@ -3,20 +3,33 @@ package handler
 import (
 	"context"
 	"net/http"
+
+	"github.com/cheezecakee/fitrkr/internal/utils/auth"
+	"github.com/cheezecakee/fitrkr/internal/utils/helper"
 )
 
-func (api *Api) IsAuthenticated() func(http.Handler) http.Handler {
+type AuthMiddleware struct {
+	JWTManager auth.JWT
+}
+
+func NewAuthMiddleware(jwtMgr auth.JWT) *AuthMiddleware {
+	return &AuthMiddleware{
+		JWTManager: jwtMgr,
+	}
+}
+
+func (m *AuthMiddleware) IsAuthenticated() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			token, err := api.Helper.GetBearerToken(r.Header)
+			token, err := helper.GetBearerToken(r.Header)
 			if err != nil {
-				api.ClientError(w, http.StatusUnauthorized)
+				http.Error(w, "unauthorized", http.StatusUnauthorized)
 				return
 			}
 
-			userID, err := api.JWTManager.ValidateJWT(token)
+			userID, err := m.JWTManager.ValidateJWT(token)
 			if err != nil {
-				api.ClientError(w, http.StatusUnauthorized)
+				http.Error(w, "unauthorized", http.StatusUnauthorized)
 				return
 			}
 

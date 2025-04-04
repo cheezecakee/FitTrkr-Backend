@@ -37,7 +37,7 @@ func (s *DBPlanExService) GetByPlanID(ctx context.Context, planID uint) ([]*m.Pl
 }
 
 func (s *DBPlanExService) Update(ctx context.Context, planEx *m.PlanEx) error {
-	return s.Update(ctx, planEx)
+	return s.repo.Update(ctx, planEx)
 }
 
 func (s *DBPlanExService) Delete(ctx context.Context, id uint) error {

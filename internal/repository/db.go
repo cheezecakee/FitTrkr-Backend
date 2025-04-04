@@ -3,10 +3,12 @@ package repository
 import (
 	"database/sql"
 	"log"
+
+	_ "github.com/jackc/pgx/v5/stdlib" // Register pgx driver
 )
 
 func NewDB(connString string) *sql.DB {
-	db, err := sql.Open("postgres", connString)
+	db, err := sql.Open("pgx", connString)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}

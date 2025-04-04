@@ -6,14 +6,12 @@ import (
 	"time"
 
 	"github.com/cheezecakee/fitrkr/internal/utils/auth"
-	"github.com/cheezecakee/fitrkr/internal/utils/helper"
 )
 
 type Config struct {
 	DBConnString string
 	Port         string
 	JWTManager   auth.JWT
-	Helper       *helper.Helper
 }
 
 func LoadConfig() Config {
@@ -21,6 +19,7 @@ func LoadConfig() Config {
 	if dbConn == "" {
 		log.Fatal("DB_CONN_STRING environment variable is required")
 	}
+	log.Println("dbConn: ", dbConn)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -39,6 +38,5 @@ func LoadConfig() Config {
 		DBConnString: dbConn,
 		Port:         port,
 		JWTManager:   jwtManager,
-		Helper:       helper.NewHelper(),
 	}
 }

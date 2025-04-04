@@ -9,13 +9,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type Helper struct{}
-
-func NewHelper() *Helper {
-	return &Helper{}
-}
-
-func (h *Helper) Clamp(value, min, max int) int {
+func Clamp(value, min, max int) int {
 	switch {
 	case value < min:
 		return min
@@ -26,7 +20,7 @@ func (h *Helper) Clamp(value, min, max int) int {
 	}
 }
 
-func (h *Helper) HashPassword(password string) (string, error) {
+func HashPassword(password string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 	if err != nil {
 		// Add custom logger and err later
@@ -35,7 +29,7 @@ func (h *Helper) HashPassword(password string) (string, error) {
 	return string(hashedPassword), nil
 }
 
-func (h *Helper) ValidatePasswordHash(hash, password string) error {
+func ComparePassword(hash, password string) error {
 	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); err != nil {
 		// Add custom logger and err later
 		return err
@@ -43,7 +37,7 @@ func (h *Helper) ValidatePasswordHash(hash, password string) error {
 	return nil
 }
 
-func (h *Helper) GetBearerToken(headers http.Header) (string, error) {
+func GetBearerToken(headers http.Header) (string, error) {
 	token := headers.Get("Authorization")
 	if token == "" {
 		// Add custom logger and err later
@@ -53,7 +47,7 @@ func (h *Helper) GetBearerToken(headers http.Header) (string, error) {
 	return token, nil
 }
 
-func (h *Helper) MakeRefreshToken() (string, error) {
+func MakeRefreshToken() (string, error) {
 	token := make([]byte, 32)
 	_, err := rand.Read(token)
 	if err != nil {

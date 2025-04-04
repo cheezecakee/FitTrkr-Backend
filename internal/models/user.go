@@ -19,12 +19,12 @@ type User struct {
 }
 
 type UserResponse struct {
-	ID        uuid.UUID
-	Username  string
-	FirstName string
-	LastName  string
-	Email     string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	IsPremium bool
+	ID        uuid.UUID `json:"id"`
+	Username  string    `json:"username"`
+	FirstName string    `json:"first_name"`
+	LastName  string    `json:"last_name"`
+	Email     string    `json:"email"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	IsPremium bool      `json:"is_premium"`
 }
