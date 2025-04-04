@@ -49,8 +49,8 @@ func SetupAuthRoutes(h *handler.AuthHandler, authM *handler.AuthMiddleware) http
 	r := chi.NewRouter()
 
 	r.Post("/login", h.Login)
-	r.Post("/refresh", h.RefreshToken)
-	r.Post("/revoke", h.RevokeToken)
+	r.Post("/refresh", h.RefreshToken) // Currently not available
+	r.Post("/revoke", h.RevokeToken)   // Currently not available
 
 	r.Group(func(r chi.Router) {
 		r.Use(authM.IsAuthenticated())

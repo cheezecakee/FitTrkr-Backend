@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
 
 	"github.com/google/uuid"
 
@@ -65,20 +66,21 @@ func (s *userService) Register(ctx context.Context, user *m.User) (*m.User, erro
 }
 
 func (s *userService) Login(ctx context.Context, email, password string) (string, error) {
-	user, err := s.repo.GetByEmail(ctx, email)
+	user, err := s.GetUserByEmail(ctx, email)
 	if err != nil {
-		if err != sql.ErrNoRows {
-			return "", ErrInvalidCredentials // No logging for security
-		}
-		return "", err
+		log.Println("email err:", err)
+		return "", ErrInvalidCredentials // No logging for security
 	}
+	log.Printf("email: %s, username: %s", user.Email, user.Username)
 
 	if err := helper.ComparePassword(user.PasswordHash, password); err != nil {
+		log.Println("password compare err:", err)
 		return "", ErrInvalidCredentials
 	}
 
 	token, err := s.jwtManager.MakeJWT(user.ID)
 	if err != nil {
+		log.Println("jwt err:", err)
 		return "", err
 	}
 
@@ -124,14 +126,16 @@ func (s *userService) Update(ctx context.Context, user *m.User) (*m.User, error)
 		return nil, err
 	}
 
-	if user.PasswordHash != existingUser.PasswordHash && existingUser.PasswordHash != "" {
+	if user.PasswordHash != "" && user.PasswordHash != existingUser.PasswordHash {
 		hashedPassword, err := helper.HashPassword(user.PasswordHash)
 		if err != nil {
 			return nil, err
 		}
 		user.PasswordHash = hashedPassword
+	} else {
+		// Preserve existing hash if no new password is provided
+		user.PasswordHash = existingUser.PasswordHash
 	}
-
 	return s.repo.Update(ctx, user)
 }
 

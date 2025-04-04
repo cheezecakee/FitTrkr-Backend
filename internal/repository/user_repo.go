@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"log"
 
 	"github.com/google/uuid"
 
@@ -58,15 +59,21 @@ func (r *userRepo) GetByID(ctx context.Context, id uuid.UUID) (*m.User, error) {
 		&user.Username,
 		&user.FirstName,
 		&user.LastName,
+		&user.PasswordHash,
 		&user.Email,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 		&user.IsPremium,
 	)
-	if err == sql.ErrNoRows {
+	if err != nil {
+		log.Printf("GetByID failed for %s: %v", id, err) // debug
+		if err == sql.ErrNoRows {
+			return nil, err
+		}
 		return nil, err
 	}
 
+	log.Printf("GetByID found: ID=%s, Email=%s", user.ID, user.Email) // Debug
 	return user, nil
 }
 
@@ -79,15 +86,20 @@ func (r *userRepo) GetByEmail(ctx context.Context, email string) (*m.User, error
 		&user.Username,
 		&user.FirstName,
 		&user.LastName,
+		&user.PasswordHash,
 		&user.Email,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 		&user.IsPremium,
 	)
-
-	if err == sql.ErrNoRows {
+	if err != nil {
+		log.Printf("GetByEmail failed for %s: %v", email, err) // debug
+		if err == sql.ErrNoRows {
+			return nil, err
+		}
 		return nil, err
 	}
+	log.Printf("GetByEmail found: ID=%s, Email=%s", user.ID, user.Email) // Debug
 	return user, nil
 }
 
@@ -100,15 +112,20 @@ func (r *userRepo) GetByUsername(ctx context.Context, username string) (*m.User,
 		&user.Username,
 		&user.FirstName,
 		&user.LastName,
+		&user.PasswordHash,
 		&user.Email,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 		&user.IsPremium,
 	)
-
-	if err == sql.ErrNoRows {
+	if err != nil {
+		log.Printf("GetByUsername failed for %s: %v", username, err) // debug
+		if err == sql.ErrNoRows {
+			return nil, err
+		}
 		return nil, err
 	}
+	log.Printf("GetByUsername found: ID=%s, Username=%s", user.ID, user.Username) // Debug
 	return user, nil
 }
 
@@ -118,8 +135,7 @@ const updateUser = `
         first_name = COALESCE(NULLIF($2, ''), first_name),
         last_name = COALESCE(NULLIF($3,  ''), last_name),
         username = COALESCE(NULLIF($4,  ''), username),
-        password_hash = COALESCE(NULLIF($5, ''), password_hash),
-        updated_at = NOW()
+        password_hash = COALESCE(NULLIF($5, ''), password_hash)
     WHERE id = $1
     RETURNING id, username, first_name, last_name, email, created_at, updated_at, is_premium
 `
@@ -127,15 +143,19 @@ const updateUser = `
 func (r *userRepo) Update(ctx context.Context, user *m.User) (*m.User, error) {
 	var updatedUser m.User
 	err := r.tx.WithTransaction(ctx, func(tx *sql.Tx) error {
-		return tx.QueryRowContext(ctx, updateUser,
-			user.ID, user.FirstName, user.LastName, user.Username, user.PasswordHash, user.Email,
-		).Scan(
-			&updatedUser.ID, &updatedUser.Username, &updatedUser.FirstName, &updatedUser.LastName,
-			&updatedUser.PasswordHash, &updatedUser.Email, &updatedUser.CreatedAt, &updatedUser.UpdatedAt,
+		return tx.QueryRowContext(ctx, updateUser, user.ID, user.FirstName, user.LastName, user.Username, user.PasswordHash).Scan(
+			&updatedUser.ID,
+			&updatedUser.Username,
+			&updatedUser.FirstName,
+			&updatedUser.LastName,
+			&updatedUser.Email,
+			&updatedUser.CreatedAt,
+			&updatedUser.UpdatedAt,
 			&updatedUser.IsPremium,
 		)
 	})
 	if err != nil {
+		log.Printf("Update failed for ID %s: %v", user.ID, err)
 		return nil, err
 	}
 	return &updatedUser, nil

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"log"
 	"net/http"
 
 	"github.com/cheezecakee/fitrkr/internal/utils/auth"
@@ -22,6 +23,7 @@ func (m *AuthMiddleware) IsAuthenticated() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token, err := helper.GetBearerToken(r.Header)
+			log.Println("Berear Token: ", token) // Debug
 			if err != nil {
 				http.Error(w, "unauthorized", http.StatusUnauthorized)
 				return
