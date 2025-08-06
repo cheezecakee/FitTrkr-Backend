@@ -1,47 +1,64 @@
+// Package app contains the application setup and lifecycle logic for FitTrkr.
 package app
 
 import (
 	"database/sql"
 
-	"github.com/cheezecakee/fitrkr/internal/repository"
-	"github.com/cheezecakee/fitrkr/internal/service"
+	"github.com/cheezecakee/fitrkr/internal/db"
+	"github.com/cheezecakee/fitrkr/internal/db/exercise"
+	"github.com/cheezecakee/fitrkr/internal/db/playlist"
+	"github.com/cheezecakee/fitrkr/internal/db/user"
 	"github.com/cheezecakee/fitrkr/internal/utils/auth"
 )
 
 type App struct {
-	DB           *sql.DB
-	UserSvc      service.UserService
-	PlanSvc      service.PlanService
-	PlanExSvc    service.PlanExService
-	SessionSvc   service.SessionService
-	SessionExSvc service.SessionExService
-	ExSetSvc     service.ExSetService
-	LogSvc       service.LogService
-	ExerciseSvc  service.ExerciseService
+	DB                  *sql.DB
+	UserSvc             user.UserService
+	ExerciseSvc         exercise.ExerciseService
+	ExerciseCategorySvc exercise.CategoryService
+	EquipmentSvc        exercise.EquipmentService
+	MuscleGroupSvc      exercise.MuscleGroupService
+	TrainingTypeSvc     exercise.TrainingTypeService
+
+	// Playlist services
+	PlaylistSvc playlist.PlaylistService
 }
 
 func NewApp(DBConnstring string, jwtMgr auth.JWT) *App {
-	db := repository.NewDB(DBConnstring)
+	database := db.NewConnection(DBConnstring)
 
-	// Initialize repos
-	UserRepo := repository.NewUserRepo(db)
-	PlanRepo := repository.NewPlanRepo(db)
-	PlanExRepo := repository.NewPlanExRepo(db)
-	SessionRepo := repository.NewSessionRepo(db)
-	SessionExRepo := repository.NewSessionExRepo(db)
-	ExSetRepo := repository.NewExSetRepo(db)
-	LogRepo := repository.NewLogRepo(db)
-	ExerciseRepo := repository.NewExerciseRepo(db)
+	// Exercise domain repositories
+	userRepo := user.NewUserRepo(database)
+	exerciseRepo := exercise.NewExerciseRepo(database)
+	exerciseCategoryRepo := exercise.NewCategoryRepo(database)
+	equipmentRepo := exercise.NewEquipmentRepo(database)
+	muscleGroupRepo := exercise.NewMuscleGroupRepo(database)
+	TrainingTypeRepo := exercise.NewTrainingTypeRepo(database)
+
+	// Playlist domain repositories
+	playlistRepo := playlist.NewPlaylistRepo(database)
+	exerciseBlockRepo := playlist.NewBlockRepo(database)
+	playlistExerciseRepo := playlist.NewPlaylistExerciseRepo(database)
+	exerciseConfigRepo := playlist.NewConfigRepo(database)
+
+	// Initialize services
+	playlistSvc := playlist.NewPlaylistService(
+		playlistRepo,
+		exerciseBlockRepo,
+		playlistExerciseRepo,
+		exerciseConfigRepo,
+	)
 
 	return &App{
-		DB:           db,
-		UserSvc:      service.NewUserService(UserRepo, jwtMgr),
-		PlanSvc:      service.NewPlanService(PlanRepo),
-		PlanExSvc:    service.NewPlanExService(PlanExRepo),
-		SessionSvc:   service.NewSessionService(SessionRepo),
-		SessionExSvc: service.NewSessionExService(SessionExRepo),
-		ExSetSvc:     service.NewExsetService(ExSetRepo),
-		LogSvc:       service.NewLogService(LogRepo),
-		ExerciseSvc:  service.NewExerciseService(ExerciseRepo),
+		DB:                  database,
+		UserSvc:             user.NewUserService(userRepo, jwtMgr),
+		ExerciseSvc:         exercise.NewExerciseService(exerciseRepo),
+		ExerciseCategorySvc: exercise.NewCategoryService(exerciseCategoryRepo),
+		EquipmentSvc:        exercise.NewEquipmentService(equipmentRepo),
+		MuscleGroupSvc:      exercise.NewMuscleGroupService(muscleGroupRepo),
+		TrainingTypeSvc:     exercise.NewTrainingTypeService(TrainingTypeRepo),
+
+		// Playlist service
+		PlaylistSvc: playlistSvc,
 	}
 }

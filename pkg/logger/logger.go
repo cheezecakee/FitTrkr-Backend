@@ -1,3 +1,4 @@
+// Package logger provides logging utilities for FitTrkr.
 package logger
 
 import (

@@ -8,21 +8,29 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/cheezecakee/fitrkr/internal/models"
-	"github.com/cheezecakee/fitrkr/internal/service"
+	"github.com/cheezecakee/fitrkr/internal/db/user"
+	"github.com/cheezecakee/fitrkr/pkg/errors"
 )
 
 type UserHandler struct {
-	svc service.UserService
+	svc user.UserService
 }
 
-func NewUserHandler(svc service.UserService) *UserHandler {
+func NewUserHandler(svc user.UserService) *UserHandler {
 	return &UserHandler{svc: svc}
 }
 
+// CreateUser creates a new user
+// @Summary Create a new user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param request body user.CreateUserRequest true "User creation payload"
+// @Success 201 {object} user.UserResponse
+// @Failure 400 {object} errors.ErrorResponse
+// @Failure 409 {object} errors.ErrorResponse
+// @Router /api/v1/users [post]
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
 	var req struct {
 		Username  string `json:"username"`
 		FirstName string `json:"first_name"`
@@ -37,7 +45,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Insert user into DB
-	newUser, err := h.svc.Register(ctx, &models.User{
+	newUser, err := h.svc.Register(r.Context(), user.User{
 		Username:     req.Username,
 		FirstName:    req.FirstName,
 		LastName:     req.LastName,
@@ -46,7 +54,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		switch err {
-		case service.ErrDuplicateEmail, service.ErrDuplicateUsername:
+		case errors.ErrDuplicateEmail, errors.ErrDuplicateUsername:
 			log.Println("client error: ", err)
 			ClientError(w, http.StatusConflict)
 		default:
@@ -58,7 +66,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	// Add custom logger and err later
 	log.Println("User created successfully!")
-	response := models.UserResponse{
+	response := user.UserResponse{
 		ID:        newUser.ID,
 		Username:  newUser.Username,
 		FirstName: newUser.FirstName,
@@ -73,6 +81,17 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	Response(w, http.StatusCreated, response)
 }
 
+// UpdateUser updates an authenticated user
+// @Summary Update user account
+// @Tags users
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body user.UserRequest true "User update payload"
+// @Success 200 {object} user.UserRequest
+// @Failure 400 {object} errors.ErrorResponse
+// @Failure 401 {object} errors.ErrorResponse
+// @Router /api/v1/users [put]
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -82,7 +101,7 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req models.User
+	var req user.User
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		ClientError(w, http.StatusBadRequest)
@@ -104,7 +123,7 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update user
-	updatedUser, err := h.svc.Update(ctx, &models.User{
+	updatedUser, err := h.svc.Update(ctx, user.User{
 		ID:           userID,
 		FirstName:    req.FirstName,
 		LastName:     req.LastName,
@@ -116,7 +135,7 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Println("User account updated successfully!")
-	response := models.UserResponse{
+	response := user.UserResponse{
 		ID:        updatedUser.ID,
 		Username:  updatedUser.Username,
 		FirstName: updatedUser.FirstName,
@@ -132,6 +151,57 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+// GetCurrentUser returns the current authenticated user's information
+// @Summary Get current user
+// @Tags users
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} user.UserResponse
+// @Failure 401 {object} errors.ErrorResponse
+// @Failure 500 {object} errors.ErrorResponse
+// @Router /api/v1/users/me [get]
+func (h *UserHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(UserIDKey).(uuid.UUID)
+	if !ok {
+		ClientError(w, http.StatusUnauthorized)
+		return
+	}
+
+	userData, err := h.svc.GetUserByID(r.Context(), userID)
+	if err != nil {
+		switch err {
+		case errors.ErrUserNotFound:
+			ClientError(w, http.StatusNotFound)
+		default:
+			ServerError(w, err)
+		}
+		return
+	}
+
+	response := user.UserResponse{
+		ID:        userData.ID,
+		Username:  userData.Username,
+		FirstName: userData.FirstName,
+		LastName:  userData.LastName,
+		Email:     userData.Email,
+		CreatedAt: userData.CreatedAt,
+		UpdatedAt: userData.UpdatedAt,
+		IsPremium: userData.IsPremium,
+		Roles:     userData.Roles,
+	}
+
+	Response(w, http.StatusOK, response)
+}
+
+// DeleteUser deletes an authenticated user
+// @Summary Delete user account
+// @Tags users
+// @Security BearerAuth
+// @Produce json
+// @Success 204 {string} string "No Content"
+// @Failure 401 {object} errors.ErrorResponse
+// @Failure 500 {object} errors.ErrorResponse
+// @Router /api/v1/users [delete]
 func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -143,10 +213,14 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	err := h.svc.Delete(ctx, userID)
 	if err != nil {
-		ServerError(w, err)
+		switch err {
+		case errors.ErrUserNotFound:
+			ClientError(w, http.StatusNotFound)
+		default:
+			ServerError(w, err)
+		}
 		return
 	}
 
-	log.Println("User deleted successfully!")
 	w.WriteHeader(http.StatusNoContent) // 204 No Content
 }

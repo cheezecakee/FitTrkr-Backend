@@ -1,3 +1,4 @@
+// Package config provides configuration utilities for FitTrkr.
 package config
 
 import (

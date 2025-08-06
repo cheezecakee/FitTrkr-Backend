@@ -6,30 +6,28 @@ import (
 	"github.com/cheezecakee/fitrkr/internal/utils/auth"
 )
 
-type Api struct {
-	UserH *handler.UserHandler
-	AuthH *handler.AuthHandler
-	// PlanH *handler.PlanHandler
-	// PlanExH    *handler.PlanExHandler
-	// SessionH   *handler.SessionHandler
-	// SessionExH *handler.SessionExHandler
-	// ExSetH     *handler.ExSetHandler
-	// LogH       *handler.LogHandler
-	// ExerciseH  *handler.ExerciseHandler
-	AuthM *handler.AuthMiddleware
+type API struct {
+	AuthH             *handler.AuthHandler
+	AuthM             *handler.AuthMiddleware
+	EquipmentH        *handler.EquipmentHandler
+	ExerciseCategoryH *handler.ExerciseCategoryHandler
+	ExerciseH         *handler.ExerciseHandler
+	TrainingTypeH     *handler.TrainingTypeHandler
+	MuscleGroupH      *handler.MuscleGroupHandler
+	PlaylistH         *handler.PlaylistHandler
+	UserH             *handler.UserHandler
 }
 
-func NewApi(app *app.App, jwtMgr auth.JWT) *Api {
-	return &Api{
-		UserH: handler.NewUserHandler(app.UserSvc),
-		AuthH: handler.NewAuthHandler(app.UserSvc),
-		// PlanH: handler.NewPlanHandler(app.PlanSvc),
-		// PlanExH:    handler.NewPlanExHandler(app.PlanExSvc),
-		// SessionH:   handler.NewSessionHandler(app.SessionSvc),
-		// SessionExH: handler.NewSessionExHandler(app.SessionExSvc),
-		// ExSetH:     handler.NewExSetHandler(app.ExSetSvc),
-		// LogH:       handler.NewLogHandler(app.LogSvc),
-		// ExerciseH:  handler.NewExerciseHandler(app.ExerciseSvc),
-		AuthM: handler.NewAuthMiddleware(jwtMgr),
+func NewAPI(app *app.App, jwtMgr auth.JWT) *API {
+	return &API{
+		AuthH:             handler.NewAuthHandler(app.UserSvc),
+		AuthM:             handler.NewAuthMiddleware(jwtMgr, app.UserSvc),
+		EquipmentH:        handler.NewEquipmentHandler(app.EquipmentSvc),
+		ExerciseCategoryH: handler.NewExerciseCategoryHandler(app.ExerciseCategorySvc),
+		ExerciseH:         handler.NewExerciseHandler(app.ExerciseSvc),
+		TrainingTypeH:     handler.NewTrainingTypeHandler(app.TrainingTypeSvc),
+		MuscleGroupH:      handler.NewMuscleGroupHandler(app.MuscleGroupSvc),
+		PlaylistH:         handler.NewPlaylistHandler(app.PlaylistSvc),
+		UserH:             handler.NewUserHandler(app.UserSvc),
 	}
 }

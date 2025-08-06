@@ -1,3 +1,4 @@
+// Package handler provides HTTP handlers for API endpoints.
 package handler
 
 import (
@@ -10,9 +11,11 @@ import (
 
 type ContextKey string
 
-const UserIDKey ContextKey = "userID"
+const (
+	UserIDKey ContextKey = "userID"
+	UserKey   ContextKey = "user"
+)
 
-// Errors
 func ServerError(w http.ResponseWriter, err error) {
 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
 	log.Println(trace)

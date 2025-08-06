@@ -1,0 +1,1376 @@
+definitions:
+  errors.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  exercise.Category:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  exercise.CreateExerciseRequest:
+    properties:
+      categoryID:
+        type: integer
+      description:
+        type: string
+      equipmentID:
+        type: integer
+      muscleGroupIDs:
+        items:
+          type: integer
+        type: array
+      name:
+        type: string
+      typeIDs:
+        items:
+          type: integer
+        type: array
+    type: object
+  exercise.Equipment:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  exercise.Exercise:
+    properties:
+      category:
+        $ref: '#/definitions/exercise.Category'
+      createdAt:
+        type: string
+      description:
+        type: string
+      equipment:
+        $ref: '#/definitions/exercise.Equipment'
+      id:
+        type: integer
+      muscleGroups:
+        items:
+          $ref: '#/definitions/exercise.MuscleGroup'
+        type: array
+      name:
+        type: string
+      training_types:
+        items:
+          $ref: '#/definitions/exercise.TrainingType'
+        type: array
+      updatedAt:
+        type: string
+    type: object
+  exercise.MuscleGroup:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  exercise.TrainingType:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  exercise.UpdateExerciseRequest:
+    properties:
+      categoryID:
+        type: integer
+      description:
+        type: string
+      equipmentID:
+        type: integer
+      muscleGroupIDs:
+        items:
+          type: integer
+        type: array
+      name:
+        type: string
+      typeIDs:
+        items:
+          type: integer
+        type: array
+    type: object
+  handler.CreateBlockRequest:
+    properties:
+      block_type:
+        type: string
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  playlist.AddExerciseToPlaylistRequest:
+    properties:
+      block_id:
+        description: If nil, creates new block
+        example: 1
+        type: integer
+      block_name:
+        example: Push Block
+        type: string
+      config:
+        $ref: '#/definitions/playlist.Config'
+      exercise_id:
+        example: 4
+        type: integer
+    required:
+    - config
+    - exercise_id
+    type: object
+  playlist.Block:
+    properties:
+      block_order:
+        type: integer
+      block_type:
+        allOf:
+        - $ref: '#/definitions/playlist.BlockType'
+        description: '''playlist'', ''standard'', ''superset'', ''circuit'', ''dropset'',
+          etc.'
+      exercises:
+        description: Joined data (not in DB)
+        items:
+          $ref: '#/definitions/playlist.PlaylistExercise'
+        type: array
+      id:
+        type: integer
+      name:
+        type: string
+      playlist_id:
+        type: integer
+      rest_after_block_seconds:
+        type: integer
+    type: object
+  playlist.BlockType:
+    enum:
+    - playlist
+    - standard
+    - superset
+    - triset
+    - circuit
+    - dropset
+    - cardio
+    - warmup
+    - cooldown
+    type: string
+    x-enum-comments:
+      BlockTypeCardio: Cardio-focused block
+      BlockTypeCircuit: Multiple exercises in sequence
+      BlockTypeCooldown: Cool-down/stretching
+      BlockTypeDropset: Same exercise with decreasing weight
+      BlockTypePlaylist: Individual exercises (replaces "regular")
+      BlockTypeStandard: Individual exercises (replaces "regular")
+      BlockTypeSuperset: 2 exercises back-to-back
+      BlockTypeTriset: 3 exercises back-to-back
+      BlockTypeWarmup: Warm-up exercises
+    x-enum-varnames:
+    - BlockTypePlaylist
+    - BlockTypeStandard
+    - BlockTypeSuperset
+    - BlockTypeTriset
+    - BlockTypeCircuit
+    - BlockTypeDropset
+    - BlockTypeCardio
+    - BlockTypeWarmup
+    - BlockTypeCooldown
+  playlist.Config:
+    properties:
+      created_at:
+        type: string
+      distance:
+        example: 2.5
+        type: number
+      duration_seconds:
+        description: Cardio fields
+        example: 600
+        type: integer
+      id:
+        example: 101
+        type: integer
+      incline:
+        example: 1.5
+        type: number
+      notes:
+        example: Keep elbows tucked
+        type: string
+      reps_max:
+        example: 12
+        type: integer
+      reps_min:
+        example: 8
+        type: integer
+      rest_seconds:
+        example: 60
+        type: integer
+      sets:
+        example: 3
+        type: integer
+      target_heart_rate:
+        example: 140
+        type: integer
+      target_pace:
+        example: 5
+        type: number
+      tempo:
+        description: 'Must be exactly 4 elements: [eccentric, pause, concentric, pause]'
+        example:
+        - 2
+        - 1
+        - 2
+        - 0
+        items:
+          type: integer
+        type: array
+      updated_at:
+        type: string
+      weight:
+        example: 50
+        type: number
+    type: object
+  playlist.CreatePlaylistRequest:
+    properties:
+      description:
+        type: string
+      goal_id:
+        type: integer
+      tag_ids:
+        items:
+          type: integer
+        type: array
+      title:
+        maxLength: 100
+        minLength: 1
+        type: string
+      visibility:
+        enum:
+        - private
+        - public
+        - unlisted
+        type: string
+    required:
+    - title
+    type: object
+  playlist.Playlist:
+    properties:
+      blocks:
+        items:
+          $ref: '#/definitions/playlist.Block'
+        type: array
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      last_worked:
+        type: boolean
+      tags:
+        description: Joined data (not in DB)
+        items:
+          $ref: '#/definitions/playlist.Tag'
+        type: array
+      title:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+      visibility:
+        allOf:
+        - $ref: '#/definitions/playlist.Visibility'
+        description: '''private'', ''public'', ''unlisted'''
+    type: object
+  playlist.PlaylistExercise:
+    properties:
+      block_id:
+        type: integer
+      config:
+        $ref: '#/definitions/playlist.Config'
+      config_id:
+        type: integer
+      created_at:
+        type: string
+      exercise_id:
+        type: integer
+      exercise_name:
+        description: Joined data (not in DB) - populated by service layer
+        type: string
+      exercise_order:
+        type: integer
+      id:
+        type: integer
+      playlist_id:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  playlist.PlaylistWithDetails:
+    properties:
+      blocks:
+        items:
+          $ref: '#/definitions/playlist.Block'
+        type: array
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      last_worked:
+        type: boolean
+      tags:
+        description: Joined data (not in DB)
+        items:
+          $ref: '#/definitions/playlist.Tag'
+        type: array
+      title:
+        type: string
+      total_blocks:
+        type: integer
+      total_exercises:
+        type: integer
+      updated_at:
+        type: string
+      user_id:
+        type: string
+      visibility:
+        allOf:
+        - $ref: '#/definitions/playlist.Visibility'
+        description: '''private'', ''public'', ''unlisted'''
+    type: object
+  playlist.Tag:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  playlist.UpdatePlaylistRequest:
+    properties:
+      description:
+        type: string
+      goal_id:
+        type: integer
+      tag_ids:
+        items:
+          type: integer
+        type: array
+      title:
+        maxLength: 100
+        minLength: 1
+        type: string
+      visibility:
+        enum:
+        - private
+        - public
+        - unlisted
+        type: string
+    type: object
+  playlist.Visibility:
+    enum:
+    - private
+    - public
+    - unlisted
+    type: string
+    x-enum-varnames:
+    - VisibilityPrivate
+    - VisibilityPublic
+    - VisibilityUnlisted
+  user.CreateUserRequest:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  user.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  user.UserRequest:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  user.UserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: string
+      is_premium:
+        type: boolean
+      last_name:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/v1/admin/equipment:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/exercise.Equipment'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List all equipment
+      tags:
+      - equipment
+  /api/v1/admin/equipment/{id}:
+    get:
+      parameters:
+      - description: Equipment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/exercise.Equipment'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get equipment by ID
+      tags:
+      - equipment
+  /api/v1/admin/exercise-categories:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/exercise.Category'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List all exercise categories
+      tags:
+      - exercise-categories
+  /api/v1/admin/exercise-categories/{id}:
+    get:
+      parameters:
+      - description: Exercise Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/exercise.Category'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get exercise category by ID
+      tags:
+      - exercise-categories
+  /api/v1/admin/exercise-types:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/exercise.TrainingType'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List all exercise types
+      tags:
+      - exercise-types
+  /api/v1/admin/exercises:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/exercise.Exercise'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List all exercises
+      tags:
+      - exercises
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Exercise payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/exercise.CreateExerciseRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/exercise.Exercise'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new exercise
+      tags:
+      - exercises
+  /api/v1/admin/exercises/{id}:
+    delete:
+      parameters:
+      - description: Exercise ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete an exercise
+      tags:
+      - exercises
+    get:
+      parameters:
+      - description: Exercise ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/exercise.Exercise'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get exercise by ID
+      tags:
+      - exercises
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Exercise ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Exercise payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/exercise.UpdateExerciseRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/exercise.UpdateExerciseRequest'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update an exercise
+      tags:
+      - exercises
+  /api/v1/admin/exercises/{id}/details:
+    get:
+      parameters:
+      - description: Exercise ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/exercise.Exercise'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get exercise with full details
+      tags:
+      - exercises
+  /api/v1/admin/exercises/by-muscle:
+    get:
+      parameters:
+      - description: Muscle group name
+        in: query
+        name: muscle_group
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/exercise.Exercise'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get exercises by muscle group
+      tags:
+      - exercises
+  /api/v1/admin/exercises/by-training-type:
+    get:
+      parameters:
+      - description: Training type name
+        in: query
+        name: training_type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/exercise.Exercise'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get exercises by training type
+      tags:
+      - exercises
+  /api/v1/admin/exercises/search:
+    get:
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/exercise.Exercise'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Search exercises
+      tags:
+      - exercises
+  /api/v1/admin/muscle-groups:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/exercise.MuscleGroup'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List all muscle groups
+      tags:
+      - muscle-groups
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Login payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: JWT token
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Log in a user
+      tags:
+      - auth
+  /api/v1/playlists:
+    get:
+      description: Get all playlists for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User's playlists
+          schema:
+            items:
+              $ref: '#/definitions/playlist.PlaylistWithDetails'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user's playlists
+      tags:
+      - playlists
+    post:
+      consumes:
+      - application/json
+      description: Create a new workout playlist for the authenticated user
+      parameters:
+      - description: Playlist creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/playlist.CreatePlaylistRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created playlist
+          schema:
+            $ref: '#/definitions/playlist.Playlist'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "409":
+          description: Playlist already exists
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new playlist
+      tags:
+      - playlists
+  /api/v1/playlists/{id}:
+    delete:
+      description: Delete a playlist and all associated data
+      parameters:
+      - description: Playlist ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: Playlist deleted successfully
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Playlist not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a playlist
+      tags:
+      - playlists
+    get:
+      description: Get playlist details by ID
+      parameters:
+      - description: Playlist ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Playlist details
+          schema:
+            $ref: '#/definitions/playlist.Playlist'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Playlist not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a playlist by ID
+      tags:
+      - playlists
+    put:
+      consumes:
+      - application/json
+      description: Update playlist details
+      parameters:
+      - description: Playlist ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Playlist update request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/playlist.UpdatePlaylistRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated playlist
+          schema:
+            $ref: '#/definitions/playlist.Playlist'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Playlist not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "409":
+          description: Playlist title already exists
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a playlist
+      tags:
+      - playlists
+  /api/v1/playlists/{id}/blocks:
+    post:
+      consumes:
+      - application/json
+      description: Create a new exercise block in a playlist
+      parameters:
+      - description: Playlist ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Create block request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateBlockRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created block
+          schema:
+            $ref: '#/definitions/playlist.Block'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Playlist not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create exercise block
+      tags:
+      - playlists
+  /api/v1/playlists/{id}/exercises:
+    post:
+      consumes:
+      - application/json
+      description: Add an exercise to a playlist with configuration
+      parameters:
+      - description: Playlist ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Add exercise request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/playlist.AddExerciseToPlaylistRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Added exercise
+          schema:
+            $ref: '#/definitions/playlist.PlaylistExercise'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Playlist or block not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Add exercise to playlist
+      tags:
+      - playlists
+  /api/v1/playlists/{id}/session:
+    get:
+      description: Get complete playlist data including exercises and configs for
+        starting a workout session
+      parameters:
+      - description: Playlist ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Complete playlist data
+          schema:
+            $ref: '#/definitions/playlist.Playlist'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Playlist not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get playlist for workout session
+      tags:
+      - playlists
+  /api/v1/playlists/exercises/{id}:
+    delete:
+      description: Remove an exercise from a playlist
+      parameters:
+      - description: Playlist Exercise ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: Exercise removed successfully
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Exercise not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Remove exercise from playlist
+      tags:
+      - playlists
+  /api/v1/playlists/tags:
+    get:
+      description: Get all available playlist tags
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Available tags
+          schema:
+            items:
+              $ref: '#/definitions/playlist.Tag'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all tags
+      tags:
+      - playlists
+  /api/v1/users:
+    delete:
+      produces:
+      - application/json
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.UserResponse'
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - users
+      - users
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User creation payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/user.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Create a new user
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User update payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.UserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.UserRequest'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user account
+      tags:
+      - users
+  /api/v1/users/me:
+    get:
+      produces:
+      - application/json
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.UserResponse'
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - users
+      - users
+securityDefinitions:
+  BearerAuth:
+    description: JWT-based authentication using Bearer token
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

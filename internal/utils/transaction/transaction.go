@@ -1,3 +1,4 @@
+// Package transaction provides transaction management utilities for FitTrkr.
 package transaction
 
 import (

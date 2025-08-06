@@ -1,10 +1,13 @@
+// Package helper provides utility functions for FitTrkr.
 package helper
 
 import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -57,4 +60,20 @@ func MakeRefreshToken() (string, error) {
 
 	encodedToken := hex.EncodeToString(token)
 	return encodedToken, nil
+}
+
+func CleanString(input string) string {
+	return strings.TrimSpace(input)
+}
+
+func IsValidLength(input string, maxLength int) bool {
+	return len(input) <= maxLength
+}
+
+func CleanAndCheckLength(input string, maxLength int) (string, error) {
+	cleaned := strings.TrimSpace(input)
+	if len(cleaned) > maxLength {
+		return "", fmt.Errorf("input exceeds maximum length of %d", maxLength)
+	}
+	return cleaned, nil
 }

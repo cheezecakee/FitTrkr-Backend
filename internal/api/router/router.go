@@ -1,3 +1,4 @@
+// Package router provides HTTP routing for the API.
 package router
 
 import (
@@ -6,6 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/cheezecakee/fitrkr/internal/api"
+	"github.com/cheezecakee/fitrkr/internal/api/handler"
 	v1 "github.com/cheezecakee/fitrkr/internal/api/router/v1"
 	"github.com/cheezecakee/fitrkr/internal/app"
 	"github.com/cheezecakee/fitrkr/internal/utils/auth"
@@ -14,9 +16,9 @@ import (
 func SetupRouter(app *app.App, jwtMgr auth.JWT, version string) http.Handler {
 	r := chi.NewRouter()
 
-	r.Use()
+	r.Use(handler.CORS)
 
-	api := api.NewApi(app, jwtMgr)
+	api := api.NewAPI(app, jwtMgr)
 
 	versions := []string{"1"}
 	for _, version := range versions {

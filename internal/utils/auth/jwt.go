@@ -1,3 +1,4 @@
+// Package auth provides JWT authentication utilities.
 package auth
 
 import (
@@ -8,11 +9,12 @@ import (
 )
 
 type JWT interface {
-	MakeJWT(userID uuid.UUID) (string, error)
+	MakeJWT(userID uuid.UUID, roles []string) (string, error)
 	ValidateJWT(tokenString string) (uuid.UUID, error)
 }
 
 type UserClaims struct {
+	Roles []string `json:"roles"`
 	jwt.RegisteredClaims
 }
 
@@ -26,12 +28,15 @@ func NewJWTManager(secretKey []byte, expiresIn time.Duration) JWT {
 	return &JWTManager{SecretKey: secretKey, ExpiresIn: expiresIn}
 }
 
-func (j *JWTManager) MakeJWT(userID uuid.UUID) (string, error) {
-	claims := &jwt.RegisteredClaims{
-		Issuer:    "fitrkr",
-		Subject:   userID.String(),
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(j.ExpiresIn)),
-		IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
+func (j *JWTManager) MakeJWT(userID uuid.UUID, roles []string) (string, error) {
+	claims := &UserClaims{
+		Roles: roles,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    "fitrkr",
+			Subject:   userID.String(),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(j.ExpiresIn)),
+			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
+		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

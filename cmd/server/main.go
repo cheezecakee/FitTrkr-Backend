@@ -6,11 +6,16 @@ import (
 
 	"github.com/joho/godotenv"
 
+	_ "github.com/cheezecakee/fitrkr/internal/api/docs"
 	"github.com/cheezecakee/fitrkr/internal/api/router"
 	"github.com/cheezecakee/fitrkr/internal/app"
 	"github.com/cheezecakee/fitrkr/internal/utils/config"
 )
 
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description JWT-based authentication using Bearer token
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Printf("No .env file found: %v", err)
